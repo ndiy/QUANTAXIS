@@ -989,6 +989,201 @@ def QA_SU_save_single_index_day(code : str, client=DATABASE, ui_log=None):
         QA_util_log_info(' ERROR CODE \n ', ui_log=ui_log)
         QA_util_log_info(err, ui_log=ui_log)
 
+
+def QA_SU_save_index_week(client=DATABASE, ui_log=None, ui_progress=None):
+    """save index_week
+
+    Keyword Arguments:
+        client {[type]} -- [description] (default: {DATABASE})
+    """
+
+    __index_list = QA_fetch_get_stock_list('index')
+    coll_index_week = client.index_week
+    coll_index_week.create_index(
+        [("code",
+          pymongo.ASCENDING),
+         ("date_stamp",
+          pymongo.ASCENDING)]
+    )
+    err = []
+
+    def __saving_work(code, coll_index_week):
+        try:
+            QA_util_log_info(
+                '##JOB51 Now Saving INDEX_WEEK==== {}'.format(str(code)),
+                ui_log=ui_log
+            )
+
+            ref = coll_index_week.find({'code': str(code)[0:6]})
+            end_date = str(now_time())[0:10]
+            if ref.count() > 0:
+                # 加入这个判断的原因是因为如果股票是刚上市的 数据库会没有数据 所以会有负索引问题出现
+
+                start_date = ref[ref.count() - 1]['date']
+
+                QA_util_log_info(
+                    'UPDATE_INDEX_WEEK \n Trying updating {} from {} to {}'
+                        .format(code,
+                                start_date,
+                                end_date),
+                    ui_log=ui_log
+                )
+                if start_date != end_date:
+                    coll_index_week.insert_many(
+                        QA_util_to_json_from_pandas(
+                            QA_fetch_get_index_day(
+                                str(code),
+                                QA_util_get_next_day(start_date),
+                                end_date,
+                                frequence='week'
+                            )
+                        )
+                    )
+            else:
+                start_date = '1990-01-01'
+                QA_util_log_info(
+                    'UPDATE_INDEX_WEEK \n Trying updating {} from {} to {}'
+                        .format(code,
+                                start_date,
+                                end_date),
+                    ui_log=ui_log
+                )
+                if start_date != end_date:
+                    coll_index_week.insert_many(
+                        QA_util_to_json_from_pandas(
+                            QA_fetch_get_index_day(
+                                str(code),
+                                start_date,
+                                end_date,
+                                frequence='week'
+                            )
+                        )
+                    )
+        except:
+            err.append(str(code))
+
+    for item in range(len(__index_list)):
+        QA_util_log_info(
+            'The {} of Total {}'.format(item,
+                                        len(__index_list)),
+            ui_log=ui_log
+        )
+        strProgress = 'DOWNLOAD PROGRESS {} '.format(
+            str(float(item / len(__index_list) * 100))[0:4] + '%'
+        )
+        intProgress = int(float(item / len(__index_list) * 100))
+        QA_util_log_info(
+            strProgress,
+            ui_log=ui_log,
+            ui_progress=ui_progress,
+            ui_progress_int_value=intProgress
+        )
+
+        __saving_work(__index_list[item], coll_index_week)
+    if len(err) < 1:
+        QA_util_log_info('SUCCESS', ui_log=ui_log)
+    else:
+        QA_util_log_info(' ERROR CODE \n ', ui_log=ui_log)
+        QA_util_log_info(err, ui_log=ui_log)
+
+
+def QA_SU_save_index_month(client=DATABASE, ui_log=None, ui_progress=None):
+    """save stock_month
+
+    Keyword Arguments:
+        client {[type]} -- [description] (default: {DATABASE})
+    """
+
+    __index_list = QA_fetch_get_stock_list('index')
+    coll_index_month = client.index_month
+    coll_index_month.create_index(
+        [("code",
+          pymongo.ASCENDING),
+         ("date_stamp",
+          pymongo.ASCENDING)]
+    )
+    err = []
+
+    def __saving_work(code, coll_index_month):
+        try:
+            QA_util_log_info(
+                '##JOB52 Now Saving STOCK_MONTH==== {}'.format(str(code)),
+                ui_log=ui_log
+            )
+
+            ref = coll_index_month.find({'code': str(code)[0:6]})
+            end_date = str(now_time())[0:10]
+            if ref.count() > 0:
+                # 加入这个判断的原因是因为如果股票是刚上市的 数据库会没有数据 所以会有负索引问题出现
+
+                start_date = ref[ref.count() - 1]['date']
+
+                QA_util_log_info(
+                    'UPDATE_INDEX_MONTH \n Trying updating {} from {} to {}'
+                        .format(code,
+                                start_date,
+                                end_date),
+                    ui_log=ui_log
+                )
+                if start_date != end_date:
+                    coll_stock_month.insert_many(
+                        QA_util_to_json_from_pandas(
+                            QA_fetch_get_index_day(
+                                str(code),
+                                QA_util_get_next_day(start_date),
+                                end_date,
+                                frequence='month'
+                            )
+                        )
+                    )
+            else:
+                start_date = '1990-01-01'
+                QA_util_log_info(
+                    'UPDATE_INDEX_MONTH \n Trying updating {} from {} to {}'
+                        .format(code,
+                                start_date,
+                                end_date),
+                    ui_log=ui_log
+                )
+                if start_date != end_date:
+                    coll_index_month.insert_many(
+                        QA_util_to_json_from_pandas(
+                            QA_fetch_get_index_day(
+                                str(code),
+                                start_date,
+                                end_date,
+                                frequence='month'
+                            )
+                        )
+                    )
+        except:
+            err.append(str(code))
+
+    for item in range(len(__index_list)):
+        QA_util_log_info(
+            'The {} of Total {}'.format(item,
+                                        len(__index_list)),
+            ui_log=ui_log
+        )
+        strProgress = 'DOWNLOAD PROGRESS {} '.format(
+            str(float(item / len(__index_list) * 100))[0:4] + '%'
+        )
+        intProgress = int(float(item / len(__index_list) * 100))
+        QA_util_log_info(
+            strProgress,
+            ui_log=ui_log,
+            ui_progress=ui_progress,
+            ui_progress_int_value=intProgress
+        )
+
+        __saving_work(__index_list[item], coll_index_month)
+    if len(err) < 1:
+        QA_util_log_info('SUCCESS', ui_log=ui_log)
+    else:
+        QA_util_log_info('ERROR CODE \n ', ui_log=ui_log)
+        QA_util_log_info(err, ui_log=ui_log)
+
+
 def QA_SU_save_bond_day(client=DATABASE, ui_log=None, ui_progress=None):
     """save bond_day
 
