@@ -1,4 +1,3 @@
-# coding:utf-8
 #
 # The MIT License (MIT)
 #
@@ -1062,24 +1061,25 @@ def QA_SU_save_index_week(client=DATABASE, ui_log=None, ui_progress=None):
         except:
             err.append(str(code))
 
-    for item in range(len(__index_list)):
+    for i_ in range(len(__index_list)):
+        # __saving_work('000001')
         QA_util_log_info(
-            'The {} of Total {}'.format(item,
+            'The {} of Total {}'.format(i_,
                                         len(__index_list)),
             ui_log=ui_log
         )
-        strProgress = 'DOWNLOAD PROGRESS {} '.format(
-            str(float(item / len(__index_list) * 100))[0:4] + '%'
+
+        strLogProgress = 'DOWNLOAD PROGRESS {} '.format(
+            str(float(i_ / len(__index_list) * 100))[0:4] + '%'
         )
-        intProgress = int(float(item / len(__index_list) * 100))
+        intLogProgress = int(float(i_ / len(__index_list) * 10000.0))
         QA_util_log_info(
-            strProgress,
+            strLogProgress,
             ui_log=ui_log,
             ui_progress=ui_progress,
-            ui_progress_int_value=intProgress
+            ui_progress_int_value=intLogProgress
         )
-
-        __saving_work(__index_list[item], coll_index_week)
+        __saving_work(__index_list.index[i_][0], coll_index_week)
     if len(err) < 1:
         QA_util_log_info('SUCCESS', ui_log=ui_log)
     else:
