@@ -228,7 +228,7 @@ def QA_SU_save_stock_day(engine, client=DATABASE, paralleled=False):
 
 @print_used_time
 def QA_SU_save_stock_week(engine, client=DATABASE, paralleled=False):
-    """save stock_day
+    """save stock_week
 
     Arguments:
         engine {[type]} -- [description]
@@ -242,6 +242,23 @@ def QA_SU_save_stock_week(engine, client=DATABASE, paralleled=False):
     engine = select_save_engine(engine, paralleled=paralleled)
     engine.QA_SU_save_stock_week(client=client)
 
+
+@print_used_time
+def QA_SU_save_stock_month(engine, client=DATABASE, paralleled=False):
+    """save stock_month
+
+    Arguments:
+        engine {[type]} -- [description]
+
+    Keyword Arguments:
+        client {[type]} -- [description] (default: {DATABASE})
+
+    :param paralleled: 是否并行处理(default: {True})
+    """
+
+    engine = select_save_engine(engine, paralleled=paralleled)
+    engine.QA_SU_save_stock_month(client=client)
+    
 
 def QA_SU_save_single_stock_day(code, engine, client=DATABASE, paralleled=False):
     """save stock_day
@@ -411,7 +428,7 @@ def QA_SU_save_index_day(engine, client=DATABASE, paralleled=False):
 
 @print_used_time
 def QA_SU_save_index_week(engine, client=DATABASE, paralleled=False):
-    """save index_day
+    """save index_week
 
     Arguments:
         engine {[type]} -- [description]
@@ -424,6 +441,23 @@ def QA_SU_save_index_week(engine, client=DATABASE, paralleled=False):
 
     engine = select_save_engine(engine, paralleled=paralleled)
     engine.QA_SU_save_index_week(client=client)
+
+
+@print_used_time
+def QA_SU_save_index_month(engine, client=DATABASE, paralleled=False):
+    """save index_month
+
+    Arguments:
+        engine {[type]} -- [description]
+
+    Keyword Arguments:
+        client {[type]} -- [description] (default: {DATABASE})
+
+    :param paralleled: 是否并行处理(default: {True})
+    """
+
+    engine = select_save_engine(engine, paralleled=paralleled)
+    engine.QA_SU_save_index_month(client=client)
 
 
 def QA_SU_save_single_index_day(code, engine, client=DATABASE, paralleled=False):
