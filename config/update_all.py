@@ -34,13 +34,19 @@ from QUANTAXIS.QASU.main import (QA_SU_save_etf_day, QA_SU_save_etf_min,
                                  QA_SU_save_bond_day,QA_SU_save_etf_list,
                                  QA_SU_save_stock_info_tushare, QA_SU_save_report_calendar_day,
                                  QA_SU_save_stock_list, QA_SU_save_stock_min,
-                                 QA_SU_save_stock_xdxr, QA_SU_save_stock_divyield_day)
-from QUANTAXIS.QASU.save_binance import (QA_SU_save_binance,
-                                         QA_SU_save_binance_1day,
-                                         QA_SU_save_binance_1hour,
-                                         QA_SU_save_binance_1min,
-                                         QA_SU_save_binance_symbol)
-
+                                 QA_SU_save_stock_xdxr)
+from QUANTAXIS.QASU.save_binance import (QA_SU_save_binance_symbol,
+                                       QA_SU_save_binance_1hour,
+                                       QA_SU_save_binance_1day, 
+                                       QA_SU_save_binance_1min, 
+                                       QA_SU_save_binance)
+from QUANTAXIS.QASU.save_bitmex import (QA_SU_save_bitmex_symbol, 
+                                         QA_SU_save_bitmex_day)
+from QUANTAXIS.QASU.save_huobi import (QA_SU_save_huobi_symbol,
+                                       QA_SU_save_huobi_1hour,
+                                       QA_SU_save_huobi_1day, 
+                                       QA_SU_save_huobi_1min, 
+                                       QA_SU_save_huobi)
 
 QA_SU_save_stock_list('tdx')
 QA_SU_save_etf_list('tdx')
