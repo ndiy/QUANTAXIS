@@ -409,9 +409,11 @@ class QA_Risk():
         beta比率 组合的系统性风险
         """
         try:
-            res = round(float(self.calc_beta(self.profit_pct.dropna(),
-                        self.benchmark_profitpct.dropna())),
-                2)
+            # res = round(float(self.calc_beta(self.profit_pct.dropna(),
+            #             self.benchmark_profitpct.dropna())),
+            #     2)
+
+            res = round(float(self.calc_beta(self.assets.pct_change().dropna().values, self.benchmark_assets.pct_change().dropna().values)),2)
         except:
             print('贝塔计算错误。。')
             res = 0
@@ -467,7 +469,8 @@ class QA_Risk():
             2)
 
     def calc_profitpctchange(self, assets):
-        return assets[::-1].pct_change()[::-1]
+        #return assets[::-1].pct_change()[::-1]
+        return assets.pct_change().fillna(1)
 
     def calc_beta(self, assest_profit, benchmark_profit):
 
@@ -1358,6 +1361,14 @@ class QA_Performance():
             return 0
 
     def continue_profit_amount(self, pnl):
+        """最大连续利润单数
+
+        Arguments:
+            pnl {[type]} -- [description]
+
+        Returns:
+            [type] -- [description]
+        """
         w = []
         w1 = 0
         for _, item in pnl.pnl_money.iteritems():
@@ -1372,14 +1383,22 @@ class QA_Performance():
             return max(w)
 
     def continue_loss_amount(self, pnl):
+        """最大连续亏损单数
+
+        Arguments:
+            pnl {[type]} -- [description]
+
+        Returns:
+            [type] -- [description]
+        """
         l = []
         l1 = 0
         for _, item in pnl.pnl_money.iteritems():
             if item > 0:
-                l1 += 1
-            elif item < 0:
                 l.append(l1)
                 l1 = 0
+            elif item < 0:
+                l1 += 1
         if len(l) == 0:
             return 0
         else:
