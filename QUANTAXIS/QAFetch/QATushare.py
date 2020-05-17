@@ -91,10 +91,7 @@ def QA_fetch_stock_basic():
             stock_basic = pro.stock_basic(
                 exchange='',
                 list_status='L',
-                fields='ts_code,'
-                'symbol,'
-                'name,'
-                'area,industry,list_date'
+                fields='ts_code,symbol,name,area,industry,fullname,enname,market,exchange,curr_type,list_status,list_date,delist_date,is_hs'
             )
         except Exception as e:
             print(e)
@@ -230,6 +227,64 @@ def QA_fetch_get_stock_money():
     pass
 
 
+def QA_fetch_bond_basic():
+
+    def fetch_bond_basic():
+        bond_basic = None
+        try:
+            pro = get_pro()
+            bond_basic = pro.cb_basic()
+        except Exception as e:
+            print(e)
+            print('except when fetch cb basic')
+            time.sleep(1)
+            bond_basic = fetch_bond_basic()
+        return bond_basic
+
+    return fetch_bond_basic()
+
+
+def QA_fetch_get_bond_list():
+    df = QA_fetch_bond_basic()
+    return list(df.ts_code)
+
+
+def QA_fetch_get_bond_day(name, start='', end='', if_fq='', type_='pd'):
+
+    def fetch_data():
+        data = None
+        try:
+            time.sleep(0.002)
+            pro = get_pro()
+            data = pro.cb_daily(
+                ts_code=str(name),
+                start_date=start,
+                end_date=end
+            ).sort_index()
+            data['date'] = data.trade_date.apply(lambda x: '%s-%s-%s' % (x[0:4], x[4:6], x[6:]))
+            print('fetch done: ' + str(name))
+        except Exception as e:
+            print(e)
+            print('except when fetch data of ' + str(name))
+            time.sleep(1)
+            data = fetch_data()
+        return data
+
+    data = fetch_data()
+
+    data['date_stamp'] = data['trade_date'].apply(lambda x: cover_time(x))
+    data['code'] = data['ts_code'].apply(lambda x: str(x)[0:6])
+    data['fqtype'] = if_fq
+    if type_ in ['json']:
+        data_json = QA_util_to_json_from_pandas(data)
+        return data_json
+    elif type_ in ['pd', 'pandas', 'p']:
+        data['date'] = pd.to_datetime(data['trade_date'], format='%Y%m%d')
+        data = data.set_index('date', drop=False)
+        data['date'] = data['date'].apply(lambda x: str(x)[0:10])
+        return data
+
+    
 # test
 
 # print(get_stock_day("000001",'2001-01-01','2010-01-01'))

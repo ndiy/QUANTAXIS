@@ -48,7 +48,6 @@ from QUANTAXIS.QAFetch.QATdx import (
     QA_fetch_get_index_transaction,
     QA_fetch_get_stock_xdxr,
     QA_fetch_get_bond_day,
-    QA_fetch_get_bond_list,
     QA_fetch_get_bond_min,
     select_best_ip,
     QA_fetch_get_hkstock_day,

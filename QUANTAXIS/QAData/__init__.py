@@ -61,7 +61,8 @@ from QUANTAXIS.QAData.QADataStruct import (
     QA_DataStruct_CryptoCurrency_day,
     QA_DataStruct_CryptoCurrency_min,
     QA_DataStruct_Stock_realtime,
-    QA_DataStruct_Stock_transaction
+    QA_DataStruct_Stock_transaction,
+    QA_DataStruct_Bond_day
 )
 from QUANTAXIS.QAData.QAFinancialStruct import QA_DataStruct_Financial
 from QUANTAXIS.QAData.QAIndicatorStruct import QA_DataStruct_Indicators

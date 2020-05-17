@@ -327,7 +327,7 @@ class CLI(cmd.Cmd):
             self.print_save_usage()
         else:
             arg = arg.split(' ')
-
+            
             if len(arg) == 1 and arg[0] == 'all':
                 if QA_Setting().client.quantaxis.user_list.find(
                     {'username': 'admin'}).count() == 0:
@@ -574,6 +574,13 @@ class CLI(cmd.Cmd):
                 QA_SU_save_single_bond_day(arg[1], 'tdx')
             elif len(arg) == 2 and arg[0] == 'single_bond_min':
                 QA_SU_save_single_bond_min(arg[1], 'tdx')
+            elif arg[-1] in ['tdx', 'tushare']:
+                for i in arg[:-1]:
+                    try:
+                        eval("QA_SU_save_%s('%s')" % (i, arg[-1]))
+                    except:
+                        print("❌命令格式不正确！")
+                        self.print_save_usage()
             else:
                 for i in arg:
                     if i == 'insert_user':

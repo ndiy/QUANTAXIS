@@ -1767,3 +1767,82 @@ class QA_DataStruct_CryptoCurrency_min(_quotation_base):
         except Exception as e:
             print('QA ERROR : FAIL TO RESAMPLE {}'.format(e))
             return None
+
+        
+class QA_DataStruct_Bond_day(_quotation_base):
+    '''
+
+        债券日线数据
+    '''
+
+    def __init__(self, init_data_by_df, dtype='bond_day', if_fq=''):
+        '''
+        # 🛠 todo dtype=bond_day 和 QA_DataStruct_Bond_day 类的名字是对应的 不变的不需要指定 ，容易出错，建议改成常量 ❌
+        :param init_data_by_df:  DataFrame 类型的数据，包含了数据，用来初始化这个类
+        :param dtype:  bond_day 🛠 todo 改成常量
+        :param if_fq:  不复权
+        '''
+        super().__init__(init_data_by_df, dtype, if_fq)
+
+        if isinstance(init_data_by_df, pd.DataFrame) == False:
+            print("QAError init_data_by_df is not kind of DataFrame type !")
+
+    # 抽象类继承
+
+    def choose_db(self):
+        self.mongo_coll = DATABASE.bond_day
+
+    def __repr__(self):
+        return '< QA_DataStruct_Bond_day with {} securities >'.format(
+            len(self.code)
+        )
+
+    __str__ = __repr__
+
+    @property
+    def preclose(self):
+        try:
+            return self.data.preclose
+        except:
+            return None
+
+    pre_close = preclose
+
+    @property
+    def price_chg(self):
+        try:
+            return (self.close - self.preclose) / self.preclose
+        except:
+            return None
+
+    @property
+    @lru_cache()
+    def week(self):
+        return self.resample('w')
+
+    @property
+    @lru_cache()
+    def month(self):
+        return self.resample('M')
+
+    @property
+    @lru_cache()
+    def quarter(self):
+        return self.resample('Q')
+
+    # @property
+    # @lru_cache()
+    # def semiannual(self):
+    #     return self.resample('SA')
+
+    @property
+    @lru_cache()
+    def year(self):
+        return self.resample('Y')
+
+    def resample(self, level):
+        try:
+            return self.add_func(QA_data_day_resample, level).sort_index()
+        except Exception as e:
+            print('QA ERROR : FAIL TO RESAMPLE {}'.format(e))
+            return None

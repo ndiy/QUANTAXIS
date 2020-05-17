@@ -41,7 +41,8 @@ from QUANTAXIS.QAData import (
     QA_DataStruct_CryptoCurrency_min,
     QA_DataStruct_Stock_transaction,
     QA_DataStruct_Index_min,
-    QA_DataStruct_Index_transaction
+    QA_DataStruct_Index_transaction,
+    QA_DataStruct_Bond_day
 )
 from QUANTAXIS.QAFetch.QAQuery import (
     QA_fetch_index_day,
@@ -61,7 +62,9 @@ from QUANTAXIS.QAFetch.QAQuery import (
     QA_fetch_stock_divyield,
     QA_fetch_cryptocurrency_day,
     QA_fetch_cryptocurrency_min,
-    QA_fetch_cryptocurrency_list
+    QA_fetch_cryptocurrency_list,
+    QA_fetch_bond_day,
+    QA_fetch_bond_list
 )
 from QUANTAXIS.QAUtil.QADate import month_data
 from QUANTAXIS.QAUtil import (
@@ -1049,3 +1052,61 @@ if __name__ == '__main__':
     print(data2.data)
     data_4h = QA.QA_DataStruct_CryptoCurrency_min(data2.resample('4h'))
     print(data_4h.data)
+
+
+def QA_fetch_bond_day_adv(
+    code,
+    start='all',
+    end=None,
+    if_drop_index=True,
+                                   # 🛠 todo collections 参数没有用到， 且数据库是固定的， 这个变量后期去掉
+    collections=DATABASE.bond_day
+):
+    '''
+
+    :param code:  股票代码
+    :param start: 开始日期
+    :param end:   结束日期
+    :param if_drop_index:
+    :param collections: 默认数据库
+    :return: 如果债券代码不存 或者开始结束日期不存在 在返回 None ，合法返回 QA_DataStruct_Bond_day 数据
+    '''
+    '获取债券日线'
+    end = start if end is None else end
+    start = str(start)[0:10]
+    end = str(end)[0:10]
+
+    if start == 'all':
+        start = '1990-01-01'
+        end = str(datetime.date.today())
+
+    res = QA_fetch_bond_day(code, start, end, format='pd', collections= collections)
+    if res is None:
+        # 🛠 todo 报告是代码不合法，还是日期不合法
+        print(
+            "QA Error QA_fetch_bond_day_adv parameter code=%s , start=%s, end=%s call QA_fetch_bond_day return None"
+            % (code,
+               start,
+               end)
+        )
+        return None
+    else:
+        res_reset_index = res.set_index(['date', 'code'], drop=if_drop_index)
+        # if res_reset_index is None:
+        #     print("QA Error QA_fetch_stock_day_adv set index 'datetime, code' return None")
+        #     return None
+        return QA_DataStruct_Bond_day(res_reset_index)
+
+def QA_fetch_bond_list_adv(collections=DATABASE.bond_list):
+    '''
+    '获取股票列表'
+    :param collections: mongodb 数据库
+    :return: DataFrame
+    '''
+    bond_list_items = QA_fetch_bond_list(collections)
+    if len(bond_list_items) == 0:
+        print(
+            "QA Error QA_fetch_bond_list_adv call item for item in collections.find() return 0 item, maybe the DATABASE.bond_list is empty!"
+        )
+        return None
+    return bond_list_items

@@ -648,6 +648,7 @@ def select_save_engine(engine, paralleled=False):
     :param paralleled: 是否并行处理；默认为False
     :return: sts means save_tushare_py  or stdx means save_tdx_py
     '''
+    print('use engine %s' % engine)
     if engine in ['tushare', 'ts', 'Tushare']:
         return sts
     elif engine in ['tdx']:

@@ -35,7 +35,11 @@ from QUANTAXIS.QAFetch.QATushare import (
     QA_fetch_get_stock_info,
     QA_fetch_get_stock_list,
     QA_fetch_get_trade_date,
-    QA_fetch_get_lhb
+    QA_fetch_get_lhb,
+    QA_fetch_get_bond_day,
+    QA_fetch_get_bond_list,
+    QA_fetch_bond_basic,
+    QA_fetch_stock_basic
 )
 from QUANTAXIS.QAUtil import (
     QA_util_date_stamp,
@@ -99,20 +103,40 @@ def QA_save_stock_day_all(client=DATABASE):
     saving_work('sz50')
 
 
-def QA_SU_save_stock_list(client=DATABASE):
-    data = QA_fetch_get_stock_list()
-    date = str(datetime.date.today())
-    date_stamp = QA_util_date_stamp(date)
-    coll = client.stock_info_tushare
-    coll.insert(
-        {
-            'date': date,
-            'date_stamp': date_stamp,
-            'stock': {
-                'code': data
-            }
-        }
-    )
+def QA_SU_save_stock_list(client=DATABASE,ui_log=None, ui_progress=None):
+    try:
+        QA_util_log_info(
+            '##JOB01 Now Saving STOCK_LIST ====',
+            ui_log=ui_log,
+            ui_progress=ui_progress,
+            ui_progress_int_value=5000
+        )
+        stock_list = QA_fetch_stock_basic()
+        #stock_list['code'] = stock_list.ts_code.apply(lambda x: x[:-3])
+        stock_list['volunit'] = 10
+        stock_list['decimal_point'] = 3
+        stock_list.rename(columns={'ts_code': 'code', 'exchange': 'sse'}, inplace=True)
+        stock_list['sse'] = stock_list.sse.apply(lambda x: x.lower())
+        stock_list.drop_duplicates(inplace=True)
+        pandas_data = QA_util_to_json_from_pandas(stock_list)
+
+        if len(pandas_data) > 0:
+            # 获取到数据后才进行drop collection 操作
+            client.drop_collection('stock_list_ts')
+            coll = client.stock_list_ts
+            coll.create_index('code', unique=True)
+            coll.insert_many(pandas_data, ordered=False)
+        QA_util_log_info(
+            "完成stock列表获取",
+            ui_log=ui_log,
+            ui_progress=ui_progress,
+            ui_progress_int_value=10000
+        )
+    except Exception as e:
+        QA_util_log_info(e, ui_log=ui_log)
+        print(" Error save_tushare.QA_SU_save_stock_list exception! %s" % e.message)
+        pass    
+
 
 
 def QA_SU_save_stock_terminated(client=DATABASE):
@@ -301,72 +325,6 @@ def QA_save_lhb(client=DATABASE):
             continue
 
 
-def _saving_work(code, coll_stock_day, ui_log=None, err=[]):
-    try:
-        QA_util_log_info(
-            '##JOB01 Now Saving STOCK_DAY==== {}'.format(str(code)),
-            ui_log
-        )
-
-        # 首选查找数据库 是否 有 这个代码的数据
-        ref = coll_stock_day.find({'code': str(code)[0:6]})
-        end_date = now_time()
-
-        # 当前数据库已经包含了这个代码的数据， 继续增量更新
-        # 加入这个判断的原因是因为如果股票是刚上市的 数据库会没有数据 所以会有负索引问题出现
-        if ref.count() > 0:
-
-            # 接着上次获取的日期继续更新
-            start_date_new_format = ref[ref.count() - 1]['trade_date']
-            start_date = ref[ref.count() - 1]['date']
-
-            QA_util_log_info(
-                'UPDATE_STOCK_DAY \n Trying updating {} from {} to {}'
-                .format(code,
-                        start_date_new_format,
-                        end_date),
-                ui_log
-            )
-            if start_date_new_format != end_date:
-                coll_stock_day.insert_many(
-                    QA_util_to_json_from_pandas(
-                        QA_fetch_get_stock_day(
-                            str(code),
-                            date_conver_to_new_format(
-                                QA_util_get_next_day(start_date)
-                            ),
-                            end_date,
-                            'bfq'
-                        )
-                    )
-                )
-
-        # 当前数据库中没有这个代码的股票数据， 从1990-01-01 开始下载所有的数据
-        else:
-            start_date = '19900101'
-            QA_util_log_info(
-                'UPDATE_STOCK_DAY \n Trying updating {} from {} to {}'
-                .format(code,
-                        start_date,
-                        end_date),
-                ui_log
-            )
-            if start_date != end_date:
-                coll_stock_day.insert_many(
-                    QA_util_to_json_from_pandas(
-                        QA_fetch_get_stock_day(
-                            str(code),
-                            start_date,
-                            end_date,
-                            'bfq'
-                        )
-                    )
-                )
-    except Exception as e:
-        print(e)
-        err.append(str(code))
-
-
 def QA_SU_save_stock_day(client=DATABASE, ui_log=None, ui_progress=None):
     '''
      save stock_day
@@ -385,6 +343,82 @@ def QA_SU_save_stock_day(client=DATABASE, ui_log=None, ui_progress=None):
          ("date_stamp",
           pymongo.ASCENDING)]
     )
+    
+    def _saving_work(code, coll_stock_day, ui_log=None, err=[]):
+        try:
+            QA_util_log_info(
+                '##JOB01 Now Saving STOCK_DAY==== {}'.format(str(code)),
+                ui_log
+            )
+
+            # 首选查找数据库 是否 有 这个代码的数据
+            ref = coll_stock_day.find({'ts_code': str(code)}, sort=[('trade_date', 1)])
+            end_date = now_time()
+
+            # 当前数据库已经包含了这个代码的数据， 继续增量更新
+            # 加入这个判断的原因是因为如果股票是刚上市的 数据库会没有数据 所以会有负索引问题出现
+            if ref.count() > 0:
+
+                # 接着上次获取的日期继续更新
+                start_date_new_format = ref[ref.count() - 1]['trade_date']
+                start_date = ref[ref.count() - 1]['date']
+                
+                if date_conver_to_new_format(QA_util_get_next_day(start_date, n=100)) < end_date:
+                    QA_util_log_info(
+                        'LAST STOCK_DAY 100 days ago {}, skip. To resume please delete {}'
+                        .format(start_date_new_format, code),
+                        ui_log
+                    )
+                else:
+                    QA_util_log_info(
+                        'UPDATE_BOND_DAY \n Trying updating {} from {} to {}'
+                        .format(code,
+                                start_date_new_format,
+                                end_date),
+                        ui_log
+                    )
+                    if start_date_new_format != end_date:
+                        pandas_data = QA_util_to_json_from_pandas(
+                                QA_fetch_get_stock_day(
+                                    str(code),
+                                    date_conver_to_new_format(
+                                        QA_util_get_next_day(start_date)
+                                    ),
+                                    end_date,
+                                    'bfq'
+                                )
+                            )
+                        if len(pandas_data) > 0:
+                            coll_stock_day.insert_many(
+                                pandas_data
+                            )
+
+            # 当前数据库中没有这个代码的股票数据， 从1990-01-01 开始下载所有的数据
+            else:
+                start_date = '19900101'
+                QA_util_log_info(
+                    'UPDATE_STOCK_DAY \n Trying updating {} from {} to {}'
+                    .format(code,
+                            start_date,
+                            end_date),
+                    ui_log
+                )
+                if start_date != end_date:
+                    pandas_data = QA_util_to_json_from_pandas(
+                            QA_fetch_get_stock_day(
+                                str(code),
+                                start_date,
+                                end_date,
+                                'bfq'
+                            )
+                        )
+                    if len(pandas_data) > 0:
+                        coll_stock_day.insert_many(
+                            pandas_data
+                        )
+        except Exception as e:
+            print(e)
+            err.append(str(code))
 
     err = []
     num_stocks = len(stock_list)
@@ -416,6 +450,165 @@ def QA_SU_save_stock_day(client=DATABASE, ui_log=None, ui_progress=None):
         QA_util_log_info(err, ui_log)
 
 
+def QA_SU_save_bond_list(client=DATABASE, ui_log=None, ui_progress=None):
+    try:
+        QA_util_log_info(
+            '##JOB16 Now Saving BOND_LIST ====',
+            ui_log=ui_log,
+            ui_progress=ui_progress,
+            ui_progress_int_value=5000
+        )
+        bond_list = QA_fetch_bond_basic()
+        #bond_list['code'] = bond_list.ts_code.apply(lambda x: x[:-3])
+        bond_list['volunit'] = 10
+        bond_list['decimal_point'] = 3
+        bond_list.rename(columns={'ts_code': 'code', 'exchange': 'sse', 'bond_short_name': 'name'}, inplace=True)
+        bond_list['sse'] = bond_list.sse.apply(lambda x: x.lower())
+        bond_list.drop_duplicates(inplace=True)
+        pandas_data = QA_util_to_json_from_pandas(bond_list)
+
+        if len(pandas_data) > 0:
+            # 获取到数据后才进行drop collection 操作
+            client.drop_collection('bond_list_ts')
+            coll = client.bond_list_ts
+            coll.create_index('code', unique=True)
+            coll.insert_many(pandas_data, ordered=False)
+        QA_util_log_info(
+            "完成bond列表获取",
+            ui_log=ui_log,
+            ui_progress=ui_progress,
+            ui_progress_int_value=10000
+        )
+    except Exception as e:
+        QA_util_log_info(e, ui_log=ui_log)
+        print(" Error save_tushare.QA_SU_save_bond_list exception! %s" % e.message)
+        pass    
+
+
+def QA_SU_save_bond_day(client=DATABASE, ui_log=None, ui_progress=None):
+    '''
+     save bond_day
+    保存日线数据
+    :param client:
+    :param ui_log:  给GUI qt 界面使用
+    :param ui_progress: 给GUI qt 界面使用
+    :param ui_progress_int_value: 给GUI qt 界面使用
+    '''
+    bond_list = QA_fetch_get_bond_list()
+    # TODO: 重命名bond_day_ts
+    coll_bond_day = client.bond_day_ts
+    coll_bond_day.create_index(
+        [("code",
+          pymongo.ASCENDING),
+         ("date_stamp",
+          pymongo.ASCENDING)]
+    )
+    
+    def _saving_work(code, coll_stock_day, ui_log=None, err=[]):
+        try:
+            QA_util_log_info(
+                '##JOB06 Now Saving BOND_DAY==== {}'.format(str(code)),
+                ui_log
+            )
+
+            # 首选查找数据库 是否 有 这个代码的数据
+            ref = coll_bond_day.find({'ts_code': str(code)}, sort=[('trade_date', 1)])
+            end_date = now_time()
+            
+            # 当前数据库已经包含了这个代码的数据， 继续增量更新
+            # 加入这个判断的原因是因为如果股票是刚上市的 数据库会没有数据 所以会有负索引问题出现
+            if ref.count() > 0:
+
+                # 接着上次获取的日期继续更新
+                start_date_new_format = ref[ref.count() - 1]['trade_date']
+                start_date = ref[ref.count() - 1]['date']
+                if date_conver_to_new_format(QA_util_get_next_day(start_date, n=100)) < end_date:
+                    QA_util_log_info(
+                        'LAST BOND_DAY 100 days ago {}, skip. To resume please delete {}'
+                        .format(start_date_new_format, code),
+                        ui_log
+                    )
+                else:
+                    QA_util_log_info(
+                        'UPDATE_BOND_DAY \n Trying updating {} from {} to {}'
+                        .format(code,
+                                start_date_new_format,
+                                end_date),
+                        ui_log
+                    )
+                    if start_date_new_format != end_date:
+                        pandas_data = QA_util_to_json_from_pandas(
+                                QA_fetch_get_bond_day(
+                                    str(code),
+                                    date_conver_to_new_format(
+                                        QA_util_get_next_day(start_date)
+                                    ),
+                                    end_date,
+                                    'bfq'
+                                )
+                            )
+                        if len(pandas_data) > 0:
+                            coll_bond_day.insert_many(
+                                pandas_data
+                            )
+
+            # 当前数据库中没有这个代码的股票数据， 从1990-01-01 开始下载所有的数据
+            else:
+                start_date = '19900101'
+                QA_util_log_info(
+                    'UPDATE_BOND_DAY \n Trying updating {} from {} to {}'
+                    .format(code,
+                            start_date,
+                            end_date),
+                    ui_log
+                )
+                if start_date != end_date:
+                    pandas_data = QA_util_to_json_from_pandas(
+                            QA_fetch_get_bond_day(
+                                str(code),
+                                start_date,
+                                end_date,
+                                'bfq'
+                            )
+                        )
+                    if len(pandas_data) > 0:
+                        coll_bond_day.insert_many(
+                            pandas_data
+                        )
+        except Exception as e:
+            print(e)
+            err.append(str(code))
+        
+    err = []
+    num_bonds = len(bond_list)
+    for index, ts_code in enumerate(bond_list):
+        QA_util_log_info('The {} of Total {}'.format(index, num_bonds))
+
+        strProgressToLog = 'DOWNLOAD PROGRESS {} {}'.format(
+            str(float(index / num_bonds * 100))[0:4] + '%',
+            ui_log
+        )
+        intProgressToLog = int(float(index / num_bonds * 100))
+        QA_util_log_info(
+            strProgressToLog,
+            ui_log=ui_log,
+            ui_progress=ui_progress,
+            ui_progress_int_value=intProgressToLog
+        )
+        _saving_work(ts_code,
+                     coll_bond_day,
+                     ui_log=ui_log,
+                     err=err)
+        # 日线行情每分钟内最多调取200次，超过5000积分无限制
+        time.sleep(0.005)
+
+    if len(err) < 1:
+        QA_util_log_info('SUCCESS save bond day ^_^', ui_log)
+    else:
+        QA_util_log_info('ERROR CODE \n ', ui_log)
+        QA_util_log_info(err, ui_log)
+        
+    
 if __name__ == '__main__':
     from pymongo import MongoClient
     client = MongoClient('localhost', 27017)
