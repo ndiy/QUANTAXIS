@@ -19,7 +19,7 @@ RUN  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 40976EAF437D05
 	&& echo "LC_ALL=zh_CN.UTF-8" >> /etc/environment
 
 RUN \
-  git clone https://github.com/QUANTAXIS/QUANTAXIS \
+  git clone https://github.com/ndiy/QUANTAXIS \
   && cd QUANTAXIS \
   && pip install -r /QUANTAXIS/requirements.txt \
   && pip install -r /requirements.txt \

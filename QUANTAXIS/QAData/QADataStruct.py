@@ -1846,3 +1846,89 @@ class QA_DataStruct_Bond_day(_quotation_base):
         except Exception as e:
             print('QA ERROR : FAIL TO RESAMPLE {}'.format(e))
             return None
+
+
+class QA_DataStruct_Bond_min(_quotation_base):
+
+    def __init__(self, DataFrame, dtype='bond_min', if_fq='bfq'):
+        super().__init__(DataFrame, dtype, if_fq)
+
+        try:
+            if 'preclose' in DataFrame.columns:
+                self.data = DataFrame.loc[:,
+                                          [
+                                              'open',
+                                              'high',
+                                              'low',
+                                              'close',
+                                              'volume',
+                                              'amount',
+                                              'preclose',
+                                              'type'
+                                          ]]
+            else:
+                self.data = DataFrame.loc[:,
+                                          [
+                                              'open',
+                                              'high',
+                                              'low',
+                                              'close',
+                                              'volume',
+                                              'amount',
+                                              'type'
+                                          ]]
+        except Exception as e:
+            raise e
+
+        self.type = dtype
+        self.if_fq = if_fq
+
+        self.data = self.data.sort_index()
+
+    # 抽象类继承
+    def choose_db(self):
+        self.mongo_coll = DATABASE.stock_min
+
+    def __repr__(self):
+        return '< QA_DataStruct_Bond_Min with {} securities >'.format(
+            len(self.code)
+        )
+
+    __str__ = __repr__
+
+    # @property
+    # def high_limit(self):
+    #     '涨停价'
+    #     return self.data.high_limit
+
+    # @property
+    # def low_limit(self):
+    #     '跌停价'
+    #     return self.data.low_limit
+
+    def resample(self, level):
+        try:
+            return self.add_funcx(QA_data_min_resample, level).sort_index()
+        except Exception as e:
+            print('QA ERROR : FAIL TO RESAMPLE {}'.format(e))
+            return None
+
+    @property
+    @lru_cache()
+    def min5(self):
+        return self.resample('5min')
+
+    @property
+    @lru_cache()
+    def min15(self):
+        return self.resample('15min')
+
+    @property
+    @lru_cache()
+    def min30(self):
+        return self.resample('30min')
+
+    @property
+    @lru_cache()
+    def min60(self):
+        return self.resample('60min')

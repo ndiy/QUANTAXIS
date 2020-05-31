@@ -42,7 +42,8 @@ from QUANTAXIS.QAData import (
     QA_DataStruct_Stock_transaction,
     QA_DataStruct_Index_min,
     QA_DataStruct_Index_transaction,
-    QA_DataStruct_Bond_day
+    QA_DataStruct_Bond_day,
+    QA_DataStruct_Bond_min
 )
 from QUANTAXIS.QAFetch.QAQuery import (
     QA_fetch_index_day,
@@ -1106,7 +1107,7 @@ def QA_fetch_bond_min_adv(
     frequence='1min',
     if_drop_index=True,
                                                                                                                               # 🛠 todo collections 参数没有用到， 且数据库是固定的， 这个变量后期去掉
-    collections=DATABASE.stock_min
+    collections=DATABASE.bond_min
 ):
     '''
     '获取债券分钟线'

@@ -3,7 +3,7 @@ FROM ndiy/qa-jupyter
 ENV TZ=Asia/Shanghai
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN cd ~ && git clone https://gitee.com/yutiansut/QADESK_BASIC && cd QADESK_BASIC \
+RUN cd ~ && git clone https://github.com/ndiy/QADESK_BASIC && cd QADESK_BASIC \
 && pip install quantaxis-servicedetect \
 && pip install quantaxis-pubsub \
 && pip install aioch \
