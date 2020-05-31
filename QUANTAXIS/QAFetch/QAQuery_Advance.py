@@ -64,6 +64,7 @@ from QUANTAXIS.QAFetch.QAQuery import (
     QA_fetch_cryptocurrency_min,
     QA_fetch_cryptocurrency_list,
     QA_fetch_bond_day,
+    QA_fetch_bond_min,
     QA_fetch_bond_list
 )
 from QUANTAXIS.QAUtil.QADate import month_data
@@ -1097,6 +1098,83 @@ def QA_fetch_bond_day_adv(
         #     return None
         return QA_DataStruct_Bond_day(res_reset_index)
 
+
+def QA_fetch_bond_min_adv(
+    code,
+    start,
+    end=None,
+    frequence='1min',
+    if_drop_index=True,
+                                                                                                                              # 🛠 todo collections 参数没有用到， 且数据库是固定的， 这个变量后期去掉
+    collections=DATABASE.stock_min
+):
+    '''
+    '获取债券分钟线'
+    :param code:  字符串str eg 600085
+    :param start: 字符串str 开始日期 eg 2011-01-01
+    :param end:   字符串str 结束日期 eg 2011-05-01
+    :param frequence: 字符串str 分钟线的类型 支持 1min 1m 5min 5m 15min 15m 30min 30m 60min 60m 类型
+    :param if_drop_index: Ture False ， dataframe drop index or not
+    :param collections: mongodb 数据库
+    :return: QA_DataStruct_Bond_min 类型
+    '''
+    if frequence in ['1min', '1m']:
+        frequence = '1min'
+    elif frequence in ['5min', '5m']:
+        frequence = '5min'
+    elif frequence in ['15min', '15m']:
+        frequence = '15min'
+    elif frequence in ['30min', '30m']:
+        frequence = '30min'
+    elif frequence in ['60min', '60m']:
+        frequence = '60min'
+    else:
+        print(
+            "QA Error QA_fetch_bond_min_adv parameter frequence=%s is none of 1min 1m 5min 5m 15min 15m 30min 30m 60min 60m"
+            % frequence
+        )
+        return None
+
+    # __data = [] 未使用
+
+    end = start if end is None else end
+    if len(start) == 10:
+        start = '{} 09:30:00'.format(start)
+
+    if len(end) == 10:
+        end = '{} 15:00:00'.format(end)
+
+    if start == end:
+        # 🛠 todo 如果相等，根据 frequence 获取开始时间的 时间段 QA_fetch_stock_min， 不支持start end是相等的
+        print(
+            "QA Error QA_fetch_bond_min_adv parameter code=%s , start=%s, end=%s is equal, should have time span! "
+            % (code,
+               start,
+               end)
+        )
+        return None
+
+    # 🛠 todo 报告错误 如果开始时间 在 结束时间之后
+
+    res = QA_fetch_bond_min(code, start, end, format='pd', frequence=frequence, collections= collections)
+    if res is None:
+        print(
+            "QA Error QA_fetch_bond_min_adv parameter code=%s , start=%s, end=%s frequence=%s call QA_fetch_bond_min return None"
+            % (code,
+               start,
+               end,
+               frequence)
+        )
+        return None
+    else:
+        res_set_index = res.set_index(['datetime', 'code'], drop=if_drop_index)
+        # if res_set_index is None:
+        #     print("QA Error QA_fetch_stock_min_adv set index 'datetime, code' return None")
+        #     return None
+        return QA_DataStruct_Bond_min(res_set_index)
+
+    
+    
 def QA_fetch_bond_list_adv(collections=DATABASE.bond_list):
     '''
     '获取股票列表'

@@ -574,6 +574,7 @@ def QA_fetch_get_bond_realtime(code=['010107'], ip=None, port=None):
                         bid1=data.bid1/10, bid2=data.bid2/10, bid3=data.bid3/10, bid4=data.bid4/10, bid5=data.bid5/10)
 
         return data.set_index(['datetime', 'code'])
+    
 @retry(stop_max_attempt_number=3, wait_random_min=50, wait_random_max=100)
 def QA_fetch_depth_market_data(code=['000001', '000002'], ip=None, port=None):
     ip, port = get_mainmarket_ip(ip, port)
