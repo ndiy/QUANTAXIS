@@ -45,7 +45,8 @@ from QUANTAXIS.QAARP.market_preset import MARKET_PRESET
 from QUANTAXIS.QAFetch.QAQuery_Advance import (QA_fetch_future_day_adv,
                                                QA_fetch_index_day_adv,
                                                QA_fetch_stock_day_adv,
-                                               QA_fetch_cryptocurrency_day_adv)
+                                               QA_fetch_cryptocurrency_day_adv,
+                                               QA_fetch_bond_day_adv)
 from QUANTAXIS.QASU.save_account import save_riskanalysis
 from QUANTAXIS.QAUtil.QADate_trade import (QA_util_get_trade_gap,
                                            QA_util_get_trade_range)
@@ -165,11 +166,15 @@ class QA_Risk():
                     self.market_data = QA_fetch_cryptocurrency_day_adv([item for item in self.account.code],
                         self.account.start_date,
                         self.account.end_date)
+                elif self.account.market_type == MARKET_TYPE.BOND_CN:
+                    self.market_data = QA_fetch_bond_day_adv(self.account.code,
+                        self.account.start_date,
+                        self.account.end_date)
             else:
                 self.market_data = market_data.select_time(self.account.start_date, self.account.end_date)
             self.if_fq = if_fq
-            if (self.account.market_type == MARKET_TYPE.FUTURE_CN) or (self.account.market_type == MARKET_TYPE.CRYPTOCURRENCY):
-                self.if_fq = False  # 如果是期货， 默认设为FALSE
+            if (self.account.market_type == MARKET_TYPE.FUTURE_CN) or (self.account.market_type == MARKET_TYPE.CRYPTOCURRENCY or self.account.market_type == MARKET_TYPE.BOND_CN):
+                self.if_fq = False  # 如果是期货债券， 默认设为FALSE
 
             if self.market_value is not None:
                 if self.account.market_type == MARKET_TYPE.FUTURE_CN and self.account.allow_margin == True:

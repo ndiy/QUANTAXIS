@@ -170,7 +170,8 @@ class QA_User():
             MARKET_TYPE.STOCK_CN: [],
             MARKET_TYPE.FUTURE_CN: [],
             MARKET_TYPE.INDEX_CN: [],
-            MARKET_TYPE.OPTION_CN: []
+            MARKET_TYPE.OPTION_CN: [],
+            MARKET_TYPE.BOND_CN: []
         }
         self._signals = []  # 预期收到的信号
         self._cash = []
