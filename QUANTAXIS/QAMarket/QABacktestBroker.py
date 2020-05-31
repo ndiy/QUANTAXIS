@@ -34,7 +34,9 @@ from QUANTAXIS.QAFetch.QAQuery import (
     QA_fetch_index_day,
     QA_fetch_index_min,
     QA_fetch_stock_day,
-    QA_fetch_stock_min
+    QA_fetch_stock_min,
+    QA_fetch_bond_day,
+    QA_fetch_bond_min
 )
 from QUANTAXIS.QAFetch.QATdx import (
     QA_fetch_get_future_day,
@@ -42,7 +44,9 @@ from QUANTAXIS.QAFetch.QATdx import (
     QA_fetch_get_index_day,
     QA_fetch_get_index_min,
     QA_fetch_get_stock_day,
-    QA_fetch_get_stock_min
+    QA_fetch_get_stock_min,
+    QA_fetch_get_bond_day,
+    QA_fetch_get_bond_min
 )
 from QUANTAXIS.QAMarket.QABroker import QA_Broker
 from QUANTAXIS.QAMarket.QADealer import QA_Dealer
@@ -155,7 +159,17 @@ class QA_BacktestBroker(QA_Broker):
             (MARKET_TYPE.FUND_CN,
              FREQUENCE.THIRTY_MIN): QA_fetch_index_min,
             (MARKET_TYPE.FUND_CN,
-             FREQUENCE.SIXTY_MIN): QA_fetch_index_min
+             FREQUENCE.SIXTY_MIN): QA_fetch_index_min,
+            (MARKET_TYPE.BOND_CN,
+             FREQUENCE.DAY): QA_fetch_bond_day,
+            (MARKET_TYPE.BOND_CN,
+             FREQUENCE.FIFTEEN_MIN): QA_fetch_bond_min,
+            (MARKET_TYPE.BOND_CN,
+             FREQUENCE.ONE_MIN): QA_fetch_bond_min,
+            (MARKET_TYPE.BOND_CN,
+             FREQUENCE.FIVE_MIN): QA_fetch_bond_min,
+            (MARKET_TYPE.BOND_CN,
+             FREQUENCE.THIRTY_MIN): QA_fetch_bond_min
         }
 
         self.market_data = None

@@ -1151,6 +1151,13 @@ class QA_Account(QA_Worker):
                 tax_fee = 0 # 买入不收印花税
             else:
                 tax_fee = self.tax_coeff * abs(trade_money)
+        elif self.market_type == MARKET_TYPE.BOND_CN:
+
+            commission_fee = self.commission_coeff * \
+                abs(trade_money)
+
+            commission_fee = 5 if commission_fee < 5 else commission_fee
+            tax_fee = 0 # 没有印花税
 
         # 结算交易
         if self.cash[-1] > trade_money + commission_fee + tax_fee:
@@ -1560,6 +1567,10 @@ class QA_Account(QA_Worker):
             if self.cash_available >= money:
                 if self.market_type == MARKET_TYPE.STOCK_CN: # 如果是股票 买入的时候有100股的最小限制
                     amount = int(amount / 100) * 100
+                    self.cash_available -= money
+                    flag = True
+                elif self.market_type == MARKET_TYPE.BOND_CN: # 如果是可转债 买入的时候有10股的最小限制
+                    amount = int(amount / 10) * 10
                     self.cash_available -= money
                     flag = True
 

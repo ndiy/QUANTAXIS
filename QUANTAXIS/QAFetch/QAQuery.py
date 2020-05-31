@@ -1959,6 +1959,82 @@ def QA_fetch_bond_day(
             % (start,
                end)
         )
+        
+
+def QA_fetch_bond_min(
+    code,
+    start,
+    end,
+    format='numpy',
+    frequence='1min',
+    collections=DATABASE.bond_min
+):
+    '获取股票分钟线'
+    if frequence in ['1min', '1m']:
+        frequence = '1min'
+    elif frequence in ['5min', '5m']:
+        frequence = '5min'
+    elif frequence in ['15min', '15m']:
+        frequence = '15min'
+    elif frequence in ['30min', '30m']:
+        frequence = '30min'
+    elif frequence in ['60min', '60m']:
+        frequence = '60min'
+    else:
+        print(
+            "QA Error QA_fetch_bond_min parameter frequence=%s is none of 1min 1m 5min 5m 15min 15m 30min 30m 60min 60m"
+            % frequence
+        )
+
+    _data = []
+    # code checking
+    code = QA_util_code_tolist(code)
+
+    cursor = collections.find(
+        {
+            'code': {
+                '$in': code
+            },
+            "time_stamp":
+                {
+                    "$gte": QA_util_time_stamp(start),
+                    "$lte": QA_util_time_stamp(end)
+                },
+            'type': frequence
+        },
+        {"_id": 0},
+        batch_size=10000
+    )
+
+    res = pd.DataFrame([item for item in cursor])
+    try:
+        res = res.assign(
+            volume=res.vol,
+            datetime=pd.to_datetime(res.datetime)
+        ).query('volume>1').drop_duplicates(['datetime',
+                                             'code']).set_index(
+                                                 'datetime',
+                                                 drop=False
+                                             )
+        # return res
+    except:
+        res = None
+    if format in ['P', 'p', 'pandas', 'pd']:
+        return res
+    elif format in ['json', 'dict']:
+        return QA_util_to_json_from_pandas(res)
+    # 多种数据格式
+    elif format in ['n', 'N', 'numpy']:
+        return numpy.asarray(res)
+    elif format in ['list', 'l', 'L']:
+        return numpy.asarray(res).tolist()
+    else:
+        print(
+            "QA Error QA_fetch_bond_min format parameter %s is none of  \"P, p, pandas, pd , json, dict , n, N, numpy, list, l, L, !\" "
+            % format
+        )
+        return None
+
 
 def QA_fetch_bond_list(collections=DATABASE.bond_list):
     '获取债券列表'
