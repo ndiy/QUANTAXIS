@@ -1,4 +1,4 @@
-FROM daocloud.io/quantaxis/qabase:latest
+FROM ndiy/qabase:latest
 
 COPY requirements.txt /requirements.txt
 COPY entrypoint.sh /entrypoint.sh
@@ -26,8 +26,8 @@ RUN wget https://downloads.sourceforge.net/project/ta-lib/ta-lib/0.4.0/ta-lib-0.
   && jupyter nbextension enable --py widgetsnbextension \
   && jupyter serverextension enable --py jupyterlab
 
-RUN apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 3B4FE6ACC0B21F32 40976EAF437D05B5\
-  && apt update
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 40976EAF437D05B5 3B4FE6ACC0B21F32\
+&&apt update
 
 RUN apt install -y curl\
 && apt install npm -y \

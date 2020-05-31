@@ -1,4 +1,4 @@
-FROM daocloud.io/quantaxis/qabase:latest
+FROM ndiy/qabase:latest
 
 COPY entrypoint.sh /entrypoint.sh
 

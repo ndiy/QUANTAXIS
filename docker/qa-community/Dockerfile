@@ -1,4 +1,4 @@
-FROM daocloud.io/quantaxis/qa-jupyter
+FROM ndiy/qa-jupyter
 
 ENV TZ=Asia/Shanghai
 ENV DEBIAN_FRONTEND noninteractive
@@ -17,7 +17,7 @@ RUN cd ~ && git clone https://gitee.com/yutiansut/QADESK_BASIC && cd QADESK_BASI
 
 
 
-RUN  apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 3B4FE6ACC0B21F32 40976EAF437D05B5 && apt update
+RUN  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 40976EAF437D05B5 3B4FE6ACC0B21F32 && apt update
   
 RUN apt install npm -y \
   && npm install n -g \
