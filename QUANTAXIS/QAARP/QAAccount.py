@@ -59,6 +59,7 @@ from QUANTAXIS.QAUtil.QAParameter import (
 )
 from QUANTAXIS.QAFetch.Fetcher import QA_quotation
 from QUANTAXIS.QAUtil.QARandom import QA_util_random_with_topic
+from QUANTAXIS.QAUtil.QALogs import QA_util_log_warning, QA_util_log_error, QA_util_log_info, QA_util_log_debug
 
 # 2017/6/4修改: 去除总资产的动态权益计算
 
@@ -578,7 +579,7 @@ class QA_Account(QA_Worker):
             if len(self.time_index_max) > 0:
                 return str(min(self.time_index_max))[0:10]
             else:
-                print(
+                QA_util_log_warning(
                     RuntimeWarning(
                         'QAACCOUNT: THIS ACCOUNT DOESNOT HAVE ANY TRADE'
                     )
@@ -600,7 +601,7 @@ class QA_Account(QA_Worker):
             if len(self.time_index_max) > 0:
                 return str(max(self.time_index_max))[0:10]
             else:
-                print(
+                QA_util_log_warning(
                     RuntimeWarning(
                         'QAACCOUNT: THIS ACCOUNT DOESNOT HAVE ANY TRADE'
                     )
@@ -612,7 +613,7 @@ class QA_Account(QA_Worker):
         if QA_util_if_trade(date):
             self.end_ = date
         else:
-            print('error {} not a trade date'.format(date))
+            QA_util_log_error('error {} not a trade date'.format(date))
 
     @property
     def market_data(self):
@@ -1338,7 +1339,7 @@ class QA_Account(QA_Worker):
             try:
                 total_frozen = sum([itex.get('avg_price',0)* itex.get('amount',0) for item in self.frozen.values() for itex in item.values()])
             except Exception as e:
-                print(e)
+                QA_util_log_error(e)
                 total_frozen = 0
             self.history.append(
                 [
@@ -1362,8 +1363,8 @@ class QA_Account(QA_Worker):
             return 0
 
         else:
-            print('ALERT MONEY NOT ENOUGH!!!')
-            print(self.cash[-1])
+            QA_util_log_warning('ALERT MONEY NOT ENOUGH!!!')
+            QA_util_log_warning(self.cash[-1])
             self.cash_available = self.cash[-1]
             return -1
             #print('NOT ENOUGH MONEY FOR {}'.format(order_id))
@@ -1405,7 +1406,7 @@ class QA_Account(QA_Worker):
             [type] -- [description]
         """
 
-        print('QAACCOUNT ==> receive deal  Time {}/ Code:{}/ Price:{}/ TOWARDS:{}/ Amounts:{}'.format(trade_time, code, trade_price, trade_towards, trade_amount))
+        QA_util_log_info('QAACCOUNT ==> receive deal  Time {}/ Code:{}/ Price:{}/ TOWARDS:{}/ Amounts:{}'.format(trade_time, code, trade_price, trade_towards, trade_amount))
 
         trade_time = str(trade_time)
         code = str(code)
@@ -1640,10 +1641,10 @@ class QA_Account(QA_Worker):
                                                      # self.cash_available -= money
                         flag = True
                     else:
-                        print('sellavailable', _hold)
-                        print('amount', amount)
-                        print('aqureMoney', money)
-                        print('cash', self.cash_available)
+                        QA_util_log_info('sellavailable', _hold)
+                        QA_util_log_info('amount', amount)
+                        QA_util_log_info('aqureMoney', money)
+                        QA_util_log_info('cash', self.cash_available)
                         wrong_reason = "卖空资金不足/不允许裸卖空"
                 else:
                     wrong_reason = "卖出仓位不足"
@@ -1679,7 +1680,7 @@ class QA_Account(QA_Worker):
             self.orders.insert_order(_order)
             return _order
         else:
-            print(
+            QA_util_log_warning(
                 'ERROR : CODE {} TIME {}  AMOUNT {} TOWARDS {}'.format(
                     code,
                     time,
@@ -1687,7 +1688,7 @@ class QA_Account(QA_Worker):
                     towards
                 )
             )
-            print(wrong_reason)
+            QA_util_log_warning(wrong_reason)
             return False
 
     def cancel_order(self, order):
@@ -1821,16 +1822,16 @@ class QA_Account(QA_Worker):
         '''
         'while updating the market data'
 
-        print(
+        QA_util_log_info(
             "on_bar account {} ".format(self.account_cookie),
             event.market_data.data
         )
-        print(event.send_order)
+        QA_util_log_info(event.send_order)
         try:
             for code in event.market_data.code:
 
                 if self.sell_available.get(code, 0) > 0:
-                    print('可以卖出 {}'.format(self._currenttime))
+                    QA_util_log_debug('可以卖出 {}'.format(self._currenttime))
                     event.send_order(
                         account_cookie=self.account_cookie,
                         amount=self.sell_available[code],
@@ -1845,7 +1846,7 @@ class QA_Account(QA_Worker):
                         broker_name=self.broker
                     )
                 else:
-                    print('{} 无仓位, 买入{}'.format(self._currenttime, code))
+                    QA_util_log_debug('{} 无仓位, 买入{}'.format(self._currenttime, code))
                     event.send_order(
                         account_cookie=self.account_cookie,
                         amount=100,
@@ -1860,7 +1861,7 @@ class QA_Account(QA_Worker):
                         broker_name=self.broker
                     )
         except Exception as e:
-            print(e)
+            QA_util_log_warning(e)
 
     def on_tick(self, event):
         '''
@@ -1869,7 +1870,7 @@ class QA_Account(QA_Worker):
         :return:
         '''
         'on tick event'
-        print("on_tick ", event.market_data)
+        QA_util_log_debug("on_tick ", event.market_data)
         pass
 
     def from_message(self, message):
@@ -1985,7 +1986,7 @@ class QA_Account(QA_Worker):
         '''
         'QA_WORKER method'
         if event.event_type is ACCOUNT_EVENT.SETTLE:
-            print('account_settle')
+            QA_util_log_info('account_settle')
             self.settle()
 
         # elif event.event_type is ACCOUNT_EVENT.UPDATE:
@@ -2249,7 +2250,7 @@ class QA_Account(QA_Worker):
         if self.market_type== MARKET_TYPE.FUTURE_CN:
             towards=ORDER_DIRECTION.BUY_CLOSE
         else:
-            print("WARING: 当前账户是股票账户, 不应该使用此接口")
+            QA_util_log_error("WARING: 当前账户是股票账户, 不应该使用此接口")
             towards = ORDER_DIRECTION.BUY
 
 
@@ -2289,7 +2290,7 @@ class QA_Account(QA_Worker):
         if self.market_type== MARKET_TYPE.FUTURE_CN:
             towards=ORDER_DIRECTION.SELL_CLOSE
         else:
-            print("WARING: 当前账户是股票账户, 不应该使用此接口")
+            QA_util_log_error("WARING: 当前账户是股票账户, 不应该使用此接口")
             towards=ORDER_DIRECTION.SELL
 
 
