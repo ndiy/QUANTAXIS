@@ -44,6 +44,7 @@ from QUANTAXIS.QAUtil import (
     trade_date_sse
 )
 from QUANTAXIS.QAData.financial_mean import financial_dict
+from QUANTAXIS.QAUtil.QALogs import QA_util_log_warning, QA_util_log_info, QA_util_log_debug, QA_util_log_error
 """
 按要求从数据库取数据，并转换成numpy结构
 
@@ -128,13 +129,13 @@ def QA_fetch_stock_day(
         elif format in ['list', 'l', 'L']:
             return numpy.asarray(res).tolist()
         else:
-            print(
+            QA_util_log_error(
                 "QA Error QA_fetch_stock_day format parameter %s is none of  \"P, p, pandas, pd , json, dict , n, N, numpy, list, l, L, !\" "
                 % format
             )
             return None
     else:
-        QA_util_log_info(
+        QA_util_log_error(
             'QA Error QA_fetch_stock_day data parameter start=%s end=%s is not right'
             % (start,
                end)
@@ -201,7 +202,7 @@ def QA_fetch_stock_min(
     elif frequence in ['60min', '60m']:
         frequence = '60min'
     else:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_stock_min parameter frequence=%s is none of 1min 1m 5min 5m 15min 15m 30min 30m 60min 60m"
             % frequence
         )
@@ -249,7 +250,7 @@ def QA_fetch_stock_min(
     elif format in ['list', 'l', 'L']:
         return numpy.asarray(res).tolist()
     else:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_stock_min format parameter %s is none of  \"P, p, pandas, pd , json, dict , n, N, numpy, list, l, L, !\" "
             % format
         )
@@ -268,7 +269,7 @@ def QA_fetch_stock_transaction(
     if frequence in ['tick', 'TICK', 'transaction']:
         frequence = 'tick'
     else:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_stock_transaction parameter frequence=%s is none of tick Tick transaction"
             % frequence
         )
@@ -316,7 +317,7 @@ def QA_fetch_stock_transaction(
     elif format in ['list', 'l', 'L']:
         return numpy.asarray(res).tolist()
     else:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_stock_transaction format parameter %s is none of  \"P, p, pandas, pd , json, dict , n, N, numpy, list, l, L, !\" "
             % format
         )
@@ -335,7 +336,7 @@ def QA_fetch_index_transaction(
     if frequence in ['tick', 'TICK', 'transaction']:
         frequence = 'tick'
     else:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_index_transaction parameter frequence=%s is none of tick Tick transaction"
             % frequence
         )
@@ -383,7 +384,7 @@ def QA_fetch_index_transaction(
     elif format in ['list', 'l', 'L']:
         return numpy.asarray(res).tolist()
     else:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_index_transaction format parameter %s is none of  \"P, p, pandas, pd , json, dict , n, N, numpy, list, l, L, !\" "
             % format
         )
@@ -538,7 +539,7 @@ def QA_fetch_stock_full(date, format='numpy', collections=DATABASE.stock_day):
             _data['date'] = pd.to_datetime(_data['date'])
             _data = _data.set_index('date', drop=False)
         else:
-            print(
+            QA_util_log_error(
                 "QA Error QA_fetch_stock_full format parameter %s is none of  \"P, p, pandas, pd , json, dict , n, N, numpy, list, l, L, !\" "
                 % format
             )
@@ -602,7 +603,7 @@ def QA_fetch_index_day(
         elif format in ['list', 'l', 'L']:
             return numpy.asarray(res).tolist()
         else:
-            print(
+            QA_util_log_error(
                 "QA Error QA_fetch_index_day format parameter %s is none of  \"P, p, pandas, pd , n, N, numpy !\" "
                 % format
             )
@@ -678,7 +679,7 @@ def QA_fetch_index_min(
     elif format in ['list', 'l', 'L']:
         return numpy.asarray(res).tolist()
     else:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_index_min format parameter %s is none of  \"P, p, pandas, pd , json, dict , n, N, numpy, list, l, L, !\" "
             % format
         )
@@ -754,7 +755,7 @@ def QA_fetch_future_day(
             _data['date'] = pd.to_datetime(_data['date'])
             _data = _data.set_index('date', drop=False)
         else:
-            print(
+            QA_util_log_error(
                 "QA Error QA_fetch_future_day format parameter %s is none of  \"P, p, pandas, pd , n, N, numpy !\" "
                 % format
             )
@@ -1512,7 +1513,7 @@ def QA_fetch_stock_financial_calendar(
         elif format in ['list', 'l', 'L']:
             return numpy.asarray(res).tolist()
         else:
-            print(
+            QA_util_log_error(
                 "QA Error QA_fetch_stock_financial_calendar format parameter %s is none of  \"P, p, pandas, pd , json, dict , n, N, numpy, list, l, L, !\" "
                 % format
             )
@@ -1588,7 +1589,7 @@ def QA_fetch_stock_divyield(
         elif format in ['list', 'l', 'L']:
             return numpy.asarray(res).tolist()
         else:
-            print(
+            QA_util_log_error(
                 "QA Error QA_fetch_stock_divyield format parameter %s is none of  \"P, p, pandas, pd , json, dict , n, N, numpy, list, l, L, !\" "
                 % format
             )
@@ -1737,7 +1738,7 @@ def QA_fetch_cryptocurrency_day(
             _data['date'] = pd.to_datetime(_data['date'])
             _data = _data.set_index('date', drop=False)
         else:
-            print(
+            QA_util_log_error(
                 "QA Error QA_fetch_cryptocurrency_day format parameter %s is none of  \"P, p, pandas, pd , n, N, numpy !\" "
                 % format
             )
@@ -1948,7 +1949,7 @@ def QA_fetch_bond_day(
         elif format in ['list', 'l', 'L']:
             return numpy.asarray(res).tolist()
         else:
-            print(
+            QA_util_log_error(
                 "QA Error QA_fetch_bond_day format parameter %s is none of  \"P, p, pandas, pd , json, dict , n, N, numpy, list, l, L, !\" "
                 % format
             )
@@ -1981,7 +1982,7 @@ def QA_fetch_bond_min(
     elif frequence in ['60min', '60m']:
         frequence = '60min'
     else:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_bond_min parameter frequence=%s is none of 1min 1m 5min 5m 15min 15m 30min 30m 60min 60m"
             % frequence
         )
@@ -2029,7 +2030,7 @@ def QA_fetch_bond_min(
     elif format in ['list', 'l', 'L']:
         return numpy.asarray(res).tolist()
     else:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_bond_min format parameter %s is none of  \"P, p, pandas, pd , json, dict , n, N, numpy, list, l, L, !\" "
             % format
         )

@@ -60,14 +60,14 @@ except:
     )
 
 logging.basicConfig(
-    level=logging.WARNING,
+    level=logging.INFO,
     format='%(asctime)s QUANTAXIS>>> %(message)s',
     datefmt='%H:%M:%S',
     filename=_name,
     filemode='w',
 )
 console = logging.StreamHandler()
-console.setLevel(logging.WARNING)
+console.setLevel(logging.INFO)
 formatter = logging.Formatter('QUANTAXIS>> %(message)s')
 console.setFormatter(formatter)
 logging.getLogger('').addHandler(console)

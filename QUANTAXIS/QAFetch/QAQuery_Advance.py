@@ -80,6 +80,7 @@ from QUANTAXIS.QAUtil import (
     QA_util_datetime_to_strdate,
     QA_util_add_months
 )
+from QUANTAXIS.QAUtil.QALogs import QA_util_log_warning, QA_util_log_info, QA_util_log_debug, QA_util_log_error
 """
 按要求从数据库取数据，并转换成numpy结构
 
@@ -139,7 +140,7 @@ def QA_fetch_stock_day_adv(
     res = QA_fetch_stock_day(code, start, end, format='pd', collections= collections)
     if res is None:
         # 🛠 todo 报告是代码不合法，还是日期不合法
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_stock_day_adv parameter code=%s , start=%s, end=%s call QA_fetch_stock_day return None"
             % (code,
                start,
@@ -184,7 +185,7 @@ def QA_fetch_stock_min_adv(
     elif frequence in ['60min', '60m']:
         frequence = '60min'
     else:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_stock_min_adv parameter frequence=%s is none of 1min 1m 5min 5m 15min 15m 30min 30m 60min 60m"
             % frequence
         )
@@ -201,7 +202,7 @@ def QA_fetch_stock_min_adv(
 
     if start == end:
         # 🛠 todo 如果相等，根据 frequence 获取开始时间的 时间段 QA_fetch_stock_min， 不支持start end是相等的
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_stock_min_adv parameter code=%s , start=%s, end=%s is equal, should have time span! "
             % (code,
                start,
@@ -213,7 +214,7 @@ def QA_fetch_stock_min_adv(
 
     res = QA_fetch_stock_min(code, start, end, format='pd', frequence=frequence, collections= collections)
     if res is None:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_stock_min_adv parameter code=%s , start=%s, end=%s frequence=%s call QA_fetch_stock_min return None"
             % (code,
                start,
@@ -238,7 +239,7 @@ def QA_fetch_stock_day_full_adv(date):
     # 🛠 todo 检查日期data参数
     res = QA_fetch_stock_full(date, 'pd')
     if res is None:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_stock_day_full_adv parameter date=%s call QA_fetch_stock_full return None"
             % (date)
         )
@@ -276,7 +277,7 @@ def QA_fetch_index_day_adv(
 
     res = QA_fetch_index_day(code, start, end, format='pd', collections= collections)
     if res is None:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_index_day_adv parameter code=%s start=%s end=%s call QA_fetch_index_day return None"
             % (code,
                start,
@@ -337,7 +338,7 @@ def QA_fetch_index_min_adv(
 
     res = QA_fetch_index_min(code, start, end, format='pd', frequence=frequence, collections= collections)
     if res is None:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_index_min_adv parameter code=%s start=%s end=%s frequence=%s call QA_fetch_index_min return None"
             % (code,
                start,
@@ -381,7 +382,7 @@ def QA_fetch_stock_transaction_adv(
 
     if start == end:
         # 🛠 todo 如果相等，根据 frequence 获取开始时间的 时间段 QA_fetch_stock_min， 不支持start end是相等的
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_stock_transaction_adv parameter code=%s , start=%s, end=%s is equal, should have time span! "
             % (code,
                start,
@@ -400,7 +401,7 @@ def QA_fetch_stock_transaction_adv(
         collections= collections
     )
     if res is None:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_stock_transaction_adv parameter code=%s , start=%s, end=%s frequence=%s call QA_fetch_stock_transaction return None"
             % (code,
                start,
@@ -448,7 +449,7 @@ def QA_fetch_index_transaction_adv(
 
     if start == end:
         # 🛠 todo 如果相等，根据 frequence 获取开始时间的 时间段 QA_fetch_stock_min， 不支持start end是相等的
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_stock_min_adv parameter code=%s , start=%s, end=%s is equal, should have time span! "
             % (code,
                start,
@@ -466,7 +467,7 @@ def QA_fetch_index_transaction_adv(
         frequence=frequence, collections= collections
     )
     if res is None:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_index_transaction_adv parameter code=%s , start=%s, end=%s frequence=%s call QA_fetch_index_transaction return None"
             % (code,
                start,
@@ -496,7 +497,7 @@ def QA_fetch_stock_list_adv(collections=DATABASE.stock_list):
     '''
     stock_list_items = QA_fetch_stock_list(collections)
     if len(stock_list_items) == 0:
-        print(
+        QA_util_log_warning(
             "QA Error QA_fetch_stock_list_adv call item for item in collections.find() return 0 item, maybe the DATABASE.stock_list is empty!"
         )
         return None
@@ -511,7 +512,7 @@ def QA_fetch_index_list_adv(collections=DATABASE.index_list):
     '''
     index_list_items = QA_fetch_index_list(collections)
     if len(index_list_items) == 0:
-        print(
+        QA_util_log_warning(
             "QA Error QA_fetch_index_list_adv call item for item in collections.find() return 0 item, maybe the DATABASE.index_list is empty!"
         )
         return None
@@ -544,7 +545,7 @@ def QA_fetch_future_day_adv(
 
     res = QA_fetch_future_day(code, start, end, format='pd', collections= collections)
     if res is None:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_future_day_adv parameter code=%s start=%s end=%s call QA_fetch_future_day return None"
             % (code,
                start,
@@ -610,7 +611,7 @@ def QA_fetch_future_min_adv(
         frequence=frequence, collections= collections
     )
     if res is None:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_future_min_adv parameter code=%s start=%s end=%s frequence=%s call QA_fetch_future_min return None"
             % (code,
                start,
@@ -636,7 +637,7 @@ def QA_fetch_future_list_adv(collections=DATABASE.future_list):
     '''
     future_list_items = QA_fetch_future_list()
     if len(future_list_items) == 0:
-        print(
+        QA_util_log_warning(
             "QA Error QA_fetch_future_list_adv call item for item in collections.find() return 0 item, maybe the DATABASE.future_list is empty!"
         )
         return None
@@ -727,7 +728,7 @@ def QA_fetch_stock_realtime_adv(
         elif isinstance(code, list):
             pass
         else:
-            print(
+            QA_util_log_error(
                 "QA Error QA_fetch_stock_realtime_adv parameter code is not List type or String type"
             )
 
@@ -742,7 +743,7 @@ def QA_fetch_stock_realtime_adv(
             )
         ]
         if items_from_collections is None:
-            print(
+            QA_util_log_error(
                 "QA Error QA_fetch_stock_realtime_adv find parameter code={} num={} collection={} return NOne"
                 .format(code,
                         num,
@@ -757,7 +758,7 @@ def QA_fetch_stock_realtime_adv(
                                                          axis=1)
         return data_set_index
     else:
-        print("QA Error QA_fetch_stock_realtime_adv parameter code is None")
+        QA_util_log_error("QA Error QA_fetch_stock_realtime_adv parameter code is None")
 
 
 def QA_fetch_financial_report_adv(code, start, end=None, ltype='EN'):
@@ -931,7 +932,7 @@ def QA_fetch_cryptocurrency_day_adv(
 
     res = QA_fetch_cryptocurrency_day(code, start, end, format='pd', collections=collections)
     if res is None:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_cryptocurrency_day_adv parameter symbol=%s start=%s end=%s call QA_fetch_cryptocurrency_day return None"
             % (code,
                start,
@@ -994,7 +995,7 @@ def QA_fetch_cryptocurrency_min_adv(
         frequence=frequence, collections=collections
     )
     if res is None:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_cryptocurrency_min_adv parameter symbol=%s start=%s end=%s frequence=%s call QA_fetch_cryptocurrency_min return None"
             % (code,
                start,
@@ -1023,7 +1024,7 @@ def QA_fetch_cryptocurrency_list_adv(
     '''
     cryptocurrency_list_items = QA_fetch_cryptocurrency_list(market, collections=collections)
     if len(cryptocurrency_list_items) == 0:
-        print(
+        QA_util_log_warning(
             "QA Error QA_fetch_cryptocurrency_list_adv call item for item in collections.find() return 0 item, maybe the DATABASE.cryptocurrency_list is empty!"
         )
         return None
@@ -1085,7 +1086,7 @@ def QA_fetch_bond_day_adv(
     res = QA_fetch_bond_day(code, start, end, format='pd', collections= collections)
     if res is None:
         # 🛠 todo 报告是代码不合法，还是日期不合法
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_bond_day_adv parameter code=%s , start=%s, end=%s call QA_fetch_bond_day return None"
             % (code,
                start,
@@ -1130,7 +1131,7 @@ def QA_fetch_bond_min_adv(
     elif frequence in ['60min', '60m']:
         frequence = '60min'
     else:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_bond_min_adv parameter frequence=%s is none of 1min 1m 5min 5m 15min 15m 30min 30m 60min 60m"
             % frequence
         )
@@ -1147,7 +1148,7 @@ def QA_fetch_bond_min_adv(
 
     if start == end:
         # 🛠 todo 如果相等，根据 frequence 获取开始时间的 时间段 QA_fetch_stock_min， 不支持start end是相等的
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_bond_min_adv parameter code=%s , start=%s, end=%s is equal, should have time span! "
             % (code,
                start,
@@ -1159,7 +1160,7 @@ def QA_fetch_bond_min_adv(
 
     res = QA_fetch_bond_min(code, start, end, format='pd', frequence=frequence, collections= collections)
     if res is None:
-        print(
+        QA_util_log_error(
             "QA Error QA_fetch_bond_min_adv parameter code=%s , start=%s, end=%s frequence=%s call QA_fetch_bond_min return None"
             % (code,
                start,
@@ -1184,7 +1185,7 @@ def QA_fetch_bond_list_adv(collections=DATABASE.bond_list):
     '''
     bond_list_items = QA_fetch_bond_list(collections)
     if len(bond_list_items) == 0:
-        print(
+        QA_util_log_warning(
             "QA Error QA_fetch_bond_list_adv call item for item in collections.find() return 0 item, maybe the DATABASE.bond_list is empty!"
         )
         return None

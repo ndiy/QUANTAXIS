@@ -52,6 +52,7 @@ from QUANTAXIS.QAUtil.QADate_trade import (QA_util_get_trade_gap,
                                            QA_util_get_trade_range)
 from QUANTAXIS.QAUtil.QAParameter import MARKET_TYPE
 from QUANTAXIS.QAUtil.QASetting import DATABASE
+from QUANTAXIS.QAUtil.QALogs import QA_util_log_warning, QA_util_log_info, QA_util_log_debug, QA_util_log_error
 
 # FIXED: no display found
 """
@@ -74,7 +75,7 @@ QARISK的更新策略:
 if platform.system() not in ['Windows',
                              'Darwin'] and os.environ.get('DISPLAY',
                                                           '') == '':
-    print('you are using non-interactive mdoel quantaxis')
+    QA_util_log_info('you are using non-interactive mdoel quantaxis')
     # print('no display found.  Using non-interactive Agg backend')
     # print("if you use ssh, you can use ssh with -X parmas to avoid this
     # issue")
@@ -96,10 +97,10 @@ except ImportError:
     ModuleNotFoundError: No module named 'tkinter'
     maybe you should install tk, tcl library
     '''
-    print("ModuleNotFoundError: No module named 'tkinter'")
-    print("centos 6: sudo yum install tk-devel tcl-devel sqlite-devel gdbm-devel xz-devel readline-devel")
-    print("cnetos 7: sudo yum install tk-devel tcl-devel sqlite-devel gdbm-devel xz-devel readline-devel python3-tk")
-    print("ubuntu: sudo apt install python3-tk")
+    QA_util_log_error("ModuleNotFoundError: No module named 'tkinter'")
+    QA_util_log_error("centos 6: sudo yum install tk-devel tcl-devel sqlite-devel gdbm-devel xz-devel readline-devel")
+    QA_util_log_error("cnetos 7: sudo yum install tk-devel tcl-devel sqlite-devel gdbm-devel xz-devel readline-devel python3-tk")
+    QA_util_log_error("ubuntu: sudo apt install python3-tk")
 finally:
     import matplotlib.patches as mpatches
     import matplotlib.pyplot as plt
@@ -178,7 +179,7 @@ class QA_Risk():
 
             if self.market_value is not None:
                 if self.account.market_type == MARKET_TYPE.FUTURE_CN and self.account.allow_margin == True:
-                    print('margin!')
+                    QA_util_log_info('margin!')
                     self._assets = (self.account.daily_frozen + # self.market_value.sum(axis=1) +
                         self.account.daily_cash.set_index('date').cash).dropna()
                 else:
@@ -419,8 +420,9 @@ class QA_Risk():
             #     2)
 
             res = round(float(self.calc_beta(self.assets.pct_change().dropna().values, self.benchmark_assets.pct_change().dropna().values)),2)
-        except:
-            print('贝塔计算错误。。')
+        except Exception as e:
+            QA_util_log_error(e)
+            QA_util_log_error('贝塔计算错误。。')
             res = 0
 
         return res
