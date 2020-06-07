@@ -925,6 +925,14 @@ cdef class QA_Account:
                 tax_fee = 0 # 买入不收印花税
             else:
                 tax_fee = self.tax_coeff * abs(trade_money)
+        elif self.market_type == MARKET_TYPE.BOND_CN:
+
+            commission_fee = self.commission_coeff * \
+                abs(trade_money)
+
+            commission_fee = 1 if commission_fee < 1 else commission_fee
+            tax_fee = 0 # 不收印花税
+            
 
         # 结算交易
         cdef float t

@@ -220,7 +220,88 @@ def QA_quotation_adv(code, start, end=save_tdx.now_time(), frequence='1min',
                     res.set_index(['datetime',
                                    'code'])
                 )
-
+    elif market == MARKET_TYPE.BOND_CN:
+        if frequence == FREQUENCE.DAY or frequence == FREQUENCE.WEEK:
+            if source == DATASOURCE.AUTO:
+                try:
+                    # 返回的是QA_DataStruct_Bond_day对象，为了与在线获取的数据格式保持统一，转成单索引
+                    res = QAQueryAdv.QA_fetch_bond_day_adv(
+                        code, start, end).data.reset_index(level='code')
+                    # res = QAQueryAdv.QA_fetch_stock_day_adv(
+                    #     code, start, end).data.reset_index(level='code')[:14]
+                    start_date = res.index[-1]
+                    end_date = pd.Timestamp(end)
+                    if end_date-start_date > datetime.timedelta(hours=17):
+                        # 从TDX补充数据，由于仅考虑个股，在这里不做入库操作，入库还是需要save
+                        data_tdx = QATdx.QA_fetch_get_bond_day(
+                            code, QA_util_get_next_period(start_date, frequence), end_date, '00')
+                        # data_tdx与从数据库获取的数据格式上做一些统一。
+                        data_tdx = data_tdx.rename(columns={"vol": "volume"}).drop([
+                            'date', 'date_stamp'], axis=1)
+                        data_tdx.index = pd.to_datetime(data_tdx.index)
+                        res = pd.concat([res, data_tdx], sort=True)
+                    res = QA_DataStruct_Bond_day(
+                        res.reset_index().set_index(['date', 'code']))
+                except:
+                    res = None
+            if source == DATASOURCE.MONGO:
+                try:
+                    res = QAQueryAdv.QA_fetch_bond_day_adv(code, start, end)
+                except:
+                    res = None
+            if source == DATASOURCE.TDX or res == None:
+                res = QATdx.QA_fetch_get_bond_day(code, start, end, '00')
+                res = QA_DataStruct_Bond_day(res.set_index(['date', 'code']))
+            elif source == DATASOURCE.TUSHARE:
+                res = QATushare.QA_fetch_get_bond_day(code, start, end, '00')
+            if frequence == FREQUENCE.WEEK:
+                res = QA_DataStruct_Bond_day(
+                    QA_data_day_resample(res.data))
+        elif frequence in [FREQUENCE.ONE_MIN, FREQUENCE.FIVE_MIN, FREQUENCE.FIFTEEN_MIN, FREQUENCE.THIRTY_MIN, FREQUENCE.SIXTY_MIN]:
+            if source == DATASOURCE.AUTO:
+                try:
+                    # 返回的是QA_DataStruct_Stock_day对象，为了与在线获取的数据格式保持统一，转成单索引
+                    res = QAQueryAdv.QA_fetch_bond_min_adv(
+                        code, start, end, frequence=frequence).data.reset_index(level='code')
+                    # res = QAQueryAdv.QA_fetch_stock_min_adv(
+                    #     code, start, end, frequence=frequence).data.reset_index(level='code')[:710]
+                    start_date = res.index[-1]
+                    end_date = pd.Timestamp(end)
+                    if end_date > start_date:
+                        # 从TDX补充数据，由于仅考虑个股，在这里不做入库操作，入库还是需要save
+                        data_tdx = QATdx.QA_fetch_get_bond_min(code, QA_util_get_next_period(
+                            start_date, frequence), end_date, frequence=frequence)
+                        # data_tdx与从数据库获取的数据格式上做一些统一。
+                        data_tdx = data_tdx.rename(columns={"vol": "volume"}).drop(
+                            ['date', 'datetime', 'date_stamp', 'time_stamp'], axis=1)
+                        data_tdx.index = pd.to_datetime(data_tdx.index)
+                        res = pd.concat([res, data_tdx], sort=True)
+                    res = QA_DataStruct_Bond_day(
+                        res.reset_index().set_index(['datetime', 'code']))
+                except:
+                    res = None
+            if source == DATASOURCE.MONGO:
+                try:
+                    res = QAQueryAdv.QA_fetch_bond_min_adv(
+                        code,
+                        start,
+                        end,
+                        frequence=frequence
+                    )
+                except:
+                    res = None
+            if source == DATASOURCE.TDX or res == None:
+                res = QATdx.QA_fetch_get_bond_min(
+                    code,
+                    start,
+                    end,
+                    frequence=frequence
+                )
+                res = QA_DataStruct_Bond_min(
+                    res.set_index(['datetime',
+                                   'code'])
+                )
+                
     elif market == MARKET_TYPE.FUTURE_CN:
         if frequence == FREQUENCE.DAY:
             if source == DATASOURCE.MONGO:
@@ -351,7 +432,31 @@ def QA_quotation(code, start, end, frequence, market, source=DATASOURCE.TDX, out
                     code, start, end, frequence=frequence)
                 res = QA_DataStruct_Stock_min(
                     res.set_index(['datetime', 'code']))
-
+    elif market == MARKET_TYPE.BOND_CN:
+        if frequence == FREQUENCE.DAY:
+            if source == DATASOURCE.MONGO:
+                try:
+                    res = QAQueryAdv.QA_fetch_bond_day_adv(code, start, end)
+                except:
+                    res = None
+            if source == DATASOURCE.TDX or res == None:
+                res = QATdx.QA_fetch_get_bond_day(code, start, end, '00')
+                res = QA_DataStruct_Bond_day(res.set_index(['date', 'code']))
+            elif source == DATASOURCE.TUSHARE:
+                res = QATushare.QA_fetch_get_bond_day(code, start, end, '00')
+        elif frequence in [FREQUENCE.ONE_MIN, FREQUENCE.FIVE_MIN, FREQUENCE.FIFTEEN_MIN, FREQUENCE.THIRTY_MIN, FREQUENCE.SIXTY_MIN]:
+            if source == DATASOURCE.MONGO:
+                try:
+                    res = QAQueryAdv.QA_fetch_bond_min_adv(
+                        code, start, end, frequence=frequence)
+                except:
+                    res = None
+            if source == DATASOURCE.TDX or res == None:
+                res = QATdx.QA_fetch_get_bond_min(
+                    code, start, end, frequence=frequence)
+                res = QA_DataStruct_Stock_min(
+                    res.set_index(['datetime', 'code']))
+                
     elif market == MARKET_TYPE.FUTURE_CN:
         if frequence == FREQUENCE.DAY:
             if source == DATASOURCE.MONGO:
