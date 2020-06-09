@@ -56,6 +56,7 @@ from QUANTAXIS.QAUtil.QAParameter import (
     EXCHANGE_ID
 )
 from QUANTAXIS.QAUtil.QARandom import QA_util_random_with_topic
+from QUANTAXIS.QAUtil.QALogs import QA_util_log_warning, QA_util_log_info, QA_util_log_debug, QA_util_log_error
 
 # 2017/6/4修改: 去除总资产的动态权益计算
 
@@ -234,11 +235,12 @@ class QA_AccountPRO(QA_Worker):
         return  <QA_Position>
 
         """
-
         pos = self.positions.get(code, QA_Position(code=code, user_cookie=self.user_cookie,
                                                    portfolio_cookie=self.portfolio_cookie,
                                                    account_cookie=self.account_cookie,
+                                                   market_type=self.market_type,
                                                    auto_reload=False))
+        #print(pos)
         if pos.market_type == self.market_type:
             self.positions[code] = pos
             return pos
@@ -389,7 +391,7 @@ class QA_AccountPRO(QA_Worker):
             if len(self.time_index_max) > 0:
                 return str(min(self.time_index_max))[0:10]
             else:
-                print(
+                QA_util_log_warning(
                     RuntimeWarning(
                         'QAACCOUNT: THIS ACCOUNT DOESNOT HAVE ANY TRADE'
                     )
@@ -411,7 +413,7 @@ class QA_AccountPRO(QA_Worker):
             if len(self.time_index_max) > 0:
                 return str(max(self.time_index_max))[0:10]
             else:
-                print(
+                QA_util_log_warning(
                     RuntimeWarning(
                         'QAACCOUNT: THIS ACCOUNT DOESNOT HAVE ANY TRADE'
                     )
@@ -424,7 +426,7 @@ class QA_AccountPRO(QA_Worker):
         if QA_util_if_trade(date):
             self.end_ = date
         else:
-            print('error {} not a trade date'.format(date))
+            QA_util_log_error('error {} not a trade date'.format(date))
 
     @property
     def market_data(self):
@@ -432,16 +434,23 @@ class QA_AccountPRO(QA_Worker):
 
     @property
     def trade_range(self):
-        return QA_util_get_trade_range(self.start_date, self.end_date)
+        if (self.market_type == MARKET_TYPE.CRYPTOCURRENCY):
+            # 数字币交易不停 这个有个细节，DateIndex必须转换成Str否则保存到Mongdo会报错。 -- 阿财 2020.05.04
+            return [d.strftime('%Y-%m-%d') for d in pd.date_range(self.start_date, self.end_date, freq='1D')]
+        else:
+            return QA_util_get_trade_range(self.start_date, self.end_date)
 
     @property
     def trade_range_max(self):
-        if self.start_date < str(min(self.time_index_max))[0:10]:
+        if (self.market_type == MARKET_TYPE.CRYPTOCURRENCY):
+            # 数字币交易不停 这个有个细节，DateIndex必须转换成Str否则保存到Mongdo会报错。 -- 阿财 2020.05.04
+            return [d.strftime('%Y-%m-%d') for d in pd.date_range(self.start_date, self.end_date, freq='1D')]
+        elif self.start_date < str(min(self.time_index_max))[0:10]:
             return QA_util_get_trade_range(self.start_date, self.end_date)
         else:
 
-            return QA_util_get_trade_range(str(min(self.time_index_max))[0:10],
-                                           str(max(str(max(self.time_index_max)), self.end_date))[0:10])
+            return QA_util_get_trade_range(str(min(self.time_index_max))[0:10], 
+                                           str(max(str(max(self.time_index_max)),self.end_date))[0:10])
 
     @property
     def total_commission(self):
@@ -482,10 +491,13 @@ class QA_AccountPRO(QA_Worker):
     @property
     def history_min(self):
         if len(self.history):
-            res_ = pd.DataFrame(self.history)
-            res_['date'] = [i[0:10] for i in res_[0]]
-            res_ = res_[res_['date'].isin(self.trade_range)]
-            return np.array(res_.drop(['date'], axis=1)).tolist()
+            res_ = self.history_table
+            if self.market_type == MARKET_TYPE.FUTURE_CN:
+                res_  = res_.assign(tradedate = res_.datetime.apply(lambda x: str(QA_util_future_to_tradedatetime(x))[0:10]))
+            else:
+                res_  = res_.assign(tradedate = res_.datetime.apply(lambda x: str(x)[0:10]))
+            res_ = res_[res_['tradedate'].isin(self.trade_range)]
+            return np.array(res_.drop(['tradedate'], axis=1)).tolist()
         else:
             return self.history
 
@@ -909,8 +921,8 @@ class QA_AccountPRO(QA_Worker):
             money = amount * price * self.market_preset.get_unit(code)*self.market_preset.get_frozen(code) * \
                 (1+self.commission_coeff) if amount_model is AMOUNT_MODEL.BY_AMOUNT else money
         else:
-            print(amount)
-            print(price)
+            QA_util_log_debug(amount)
+            QA_util_log_debug(price)
             money = amount * price * \
                 (1+self.commission_coeff) if amount_model is AMOUNT_MODEL.BY_AMOUNT else money
 
@@ -923,6 +935,10 @@ class QA_AccountPRO(QA_Worker):
             if self.cash_available >= money:
                 if self.market_type == MARKET_TYPE.STOCK_CN:  # 如果是股票 买入的时候有100股的最小限制
                     amount = int(amount / 100) * 100
+                    self.cash_available -= money
+                    flag = True
+                elif self.market_type == MARKET_TYPE.BOND_CN: # 如果是可转债 买入的时候有10股的最小限制
+                    amount = int(amount / 10) * 10
                     self.cash_available -= money
                     flag = True
 
@@ -1035,7 +1051,7 @@ class QA_AccountPRO(QA_Worker):
             self.orders.insert_order(_order)
             return _order
         else:
-            print(
+            QA_util_log_warning(
                 'ERROR : CODE {} TIME {}  AMOUNT {} TOWARDS {}'.format(
                     code,
                     time,
@@ -1043,7 +1059,7 @@ class QA_AccountPRO(QA_Worker):
                     towards
                 )
             )
-            print(wrong_reason)
+            QA_util_log_warning(wrong_reason)
             return False
 
     def make_deal(self, order: dict):
@@ -1173,6 +1189,13 @@ class QA_AccountPRO(QA_Worker):
                 tax_fee = 0  # 买入不收印花税
             else:
                 tax_fee = self.tax_coeff * abs(trade_money)
+        elif self.market_type == MARKET_TYPE.BOND_CN:
+
+            commission_fee = self.commission_coeff * \
+                abs(trade_money)
+
+            commission_fee = 1 if commission_fee < 1 else commission_fee
+            tax_fee = 0 # 没有印花税
 
         # 结算交易
         if self.cash[-1] > trade_money + commission_fee + tax_fee:
@@ -1351,14 +1374,14 @@ class QA_AccountPRO(QA_Worker):
                 total_frozen = sum([itex.get('avg_price', 0) * itex.get('amount', 0)
                                     for item in self.frozen.values() for itex in item.values()])
             except Exception as e:
-                print(e)
+                QA_util_log_error(e)
                 total_frozen = 0
             self.history.append(
                 [
                     str(trade_time),
                     code,
                     trade_price,
-                    market_towards * trade_amount,
+                    float(market_towards * trade_amount),
                     self.cash[-1],
                     order_id,
                     realorder_id,
@@ -1376,8 +1399,8 @@ class QA_AccountPRO(QA_Worker):
             return 0
 
         else:
-            print('ALERT MONEY NOT ENOUGH!!!')
-            print(self.cash[-1])
+            QA_util_log_warning('ALERT MONEY NOT ENOUGH!!!')
+            QA_util_log_warning(self.cash[-1])
             self.cash_available = self.cash[-1]
             return -1
             #print('NOT ENOUGH MONEY FOR {}'.format(order_id))

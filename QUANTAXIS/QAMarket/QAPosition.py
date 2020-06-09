@@ -142,6 +142,8 @@ class QA_Position():
 
             self.market_type = MARKET_TYPE.FUTURE_CN if re.search(
                 r'[a-zA-z]+', self.code) else MARKET_TYPE.STOCK_CN
+        else:
+            self.market_type = market_type
         self.exchange_id = exchange_id
 
         self.volume_long_his = volume_long_his
@@ -772,6 +774,20 @@ class QA_Position():
                 commission_fee = commission_fee_preset['commission_coeff_today_pervol'] * trade_amount + \
                     commission_fee_preset['commission_coeff_today_peramount'] * \
                     abs(value)
+            return commission_fee
+        elif self.market_type == MARKET_TYPE.STOCK_CN:
+
+            commission_fee = self.commission_coeff * \
+                abs(trade_price * trade_amount)
+
+            commission_fee = 5 if commission_fee < 5 else commission_fee
+            return commission_fee
+        elif self.market_type == MARKET_TYPE.BOND_CN:
+
+            commission_fee = self.commission_coeff * \
+                abs(trade_price * trade_amount)
+
+            commission_fee = 1 if commission_fee < 1 else commission_fee
             return commission_fee
 
     def loadfrommessage(self, message):

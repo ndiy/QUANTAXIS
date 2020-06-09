@@ -1236,7 +1236,7 @@ def QA_SU_save_index_day(client=DATABASE, ui_log=None, ui_progress=None):
         client {[type]} -- [description] (default: {DATABASE})
     """
 
-    __index_list = QA_fetch_get_stock_list('index')
+    __index_list = QA_fetch_get_index_list()
     coll = client.index_day
     coll.create_index(
         [('code',

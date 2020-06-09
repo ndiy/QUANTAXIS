@@ -709,7 +709,7 @@ def QA_fetch_get_stock_list(type_='stock', ip=None, port=None):
 
         sz = sz.assign(sec=sz.code.apply(for_sz))
         sh = sh.assign(sec=sh.code.apply(for_sh))
-
+        
         if type_ in ['stock', 'gp']:
 
             return pd.concat([sz, sh], sort=False).query(
@@ -717,10 +717,16 @@ def QA_fetch_get_stock_list(type_='stock', ip=None, port=None):
                 name=data['name'].apply(lambda x: str(x)[0:6]))
 
         elif type_ in ['index', 'zs']:
+            ins = extension_market_list.query('market==62')
+            zz = ins[(ins.code.str[0]<='3') & 
+                     (~ins.code.isin(sz.code.values)) &
+                      (~ins.code.isin(sh.code.values))]
+            zz = zz.assign(sse = 'zz')
+            zz = zz.assign(sec = 'index_cn')
+            zz.set_index(['code', 'sse'], drop=False, inplace=True)
 
-            return pd.concat([sz, sh], sort=False).query(
-                'sec=="index_cn"').sort_index().assign(
-                name=data['name'].apply(lambda x: str(x)[0:6]))
+            return pd.concat([sz, sh, zz], sort=False).query(
+                'sec=="index_cn"').sort_index()
             # .assign(szm=data['name'].apply(lambda x: ''.join([y[0] for y in lazy_pinyin(x)])))\
             # .assign(quanpin=data['name'].apply(lambda x: ''.join(lazy_pinyin(x))))
         elif type_ in ['etf', 'ETF']:
@@ -745,7 +751,10 @@ def QA_fetch_get_index_list(ip=None, port=None):
     Returns:
         [type] -- [description]
     """
-
+    global extension_market_list
+    extension_market_list = QA_fetch_get_extensionmarket_list(
+    ) if extension_market_list is None else extension_market_list
+    
     ip, port = get_mainmarket_ip(ip, port)
     api = TdxHq_API()
     with api.connect(ip, port):
@@ -759,12 +768,20 @@ def QA_fetch_get_index_list(ip=None, port=None):
         # data.code = data.code.apply(int)
         sz = data.query('sse=="sz"')
         sh = data.query('sse=="sh"')
-
+        
+        ins = extension_market_list.query('market==62')
+        zz = ins[(ins.code.str[0]<='3') & 
+                 (~ins.code.isin(sz.code.values)) &
+                  (~ins.code.isin(sh.code.values))]
+        zz = zz.assign(sse = 'zz')
+        zz = zz.assign(sec = 'index_cn')
+        zz.set_index(['code', 'sse'], drop=False, inplace=True)
+        
         sz = sz.assign(sec=sz.code.apply(for_sz))
         sh = sh.assign(sec=sh.code.apply(for_sh))
-        return pd.concat([sz, sh], sort=False).query(
-            'sec=="index_cn"').sort_index().assign(
-            name=data['name'].apply(lambda x: str(x)[0:6]))
+        return pd.concat([sz, sh, zz], sort=False).query(
+            'sec=="index_cn"').sort_index()
+    
 
 
 @retry(stop_max_attempt_number=3, wait_random_min=50, wait_random_max=100)
@@ -931,6 +948,23 @@ def QA_fetch_get_index_day(code, start_date, end_date, frequence='day',
                 frequence, 1 if str(code)[0] in ['0', '8', '9', '5'] else 0,
                 code, (int(lens / 800) - i) * 800, 800))
                 for i in range(int(lens / 800) + 1)], axis=0, sort=False)
+            
+            if data.empty:
+                # 添加ZZ指数
+                ip, port = get_extensionmarket_ip(ip=None, port=None)
+                apix = TdxExHq_API()
+                print(ip, port)
+                with apix.connect(ip, port):
+                    data = pd.concat(
+                        [apix.to_df(apix.get_instrument_bars(
+                            _select_type(frequence),
+                            int(62),
+                            str(code),
+                            (int(lens / 700) - i) * 700, 700)) for i in
+                            range(int(lens / 700) + 1)], axis=0, sort=False)
+                    if not data.empty:
+                        data.rename(columns={'position':'vol'},inplace=True)                
+                
         data = data.assign(
             date=data['datetime'].apply(lambda x: str(x[0:10]))).assign(
             code=str(code)) \
