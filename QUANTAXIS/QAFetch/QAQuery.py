@@ -1348,7 +1348,7 @@ def QA_fetch_lhb(date, db=DATABASE):
 #             return None
 #     except Exception as e:
 #         raise e
-def QA_fetch_financial_report(code, report_date, ltype='EN', db=DATABASE):
+def QA_fetch_financial_report(code, report_date=None, ltype='EN', db=DATABASE):
     """获取专业财务报表
     Arguments:
         code {[type]} -- [description]
@@ -1454,7 +1454,7 @@ def QA_fetch_financial_report(code, report_date, ltype='EN', db=DATABASE):
     except Exception as e:
         raise e
 
-
+        
 def QA_fetch_stock_financial_calendar(
     code,
     start,

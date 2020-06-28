@@ -761,7 +761,7 @@ def QA_fetch_stock_realtime_adv(
         QA_util_log_error("QA Error QA_fetch_stock_realtime_adv parameter code is None")
 
 
-def QA_fetch_financial_report_adv(code, start, end=None, ltype='EN'):
+def QA_fetch_financial_report_adv(code, start=None, end=None, ltype='EN'):
     """高级财务查询接口
     Arguments:
         code {[type]} -- [description]
